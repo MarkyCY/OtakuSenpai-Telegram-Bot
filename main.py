@@ -25,3 +25,13 @@ def start(message):
 @bot.message_handler(regexp="Hola")
 def say_hello(message):
     bot.send_message(message.chat.id, "Holiiii")
+
+
+
+if __name__ == '__main__':
+    bot.set_my_commands([
+        telebot.types.BotCommand("/start", "Welcome"),
+        telebot.types.BotCommand("/reg", "Register")
+    ])
+    print('Iniciando el Bot')
+    bot.infinity_polling()
