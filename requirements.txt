@@ -1,3 +1,5 @@
 pymongo
 python-dotenv
 telebot
+requests
+graphqlclient
