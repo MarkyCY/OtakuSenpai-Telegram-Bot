@@ -77,7 +77,6 @@ def anime(message):
 <strong>Estado:</strong> {status}
 <strong>Para Adultos?:</strong> {adult}
 """
-        bot.send_message(cid, "prueba pa ver si telegram pincha bien")
         bot.send_photo(cid, foto, msg, parse_mode="html")
     else:
         bot.send_message(message.chat.id, f"Debes poner el nombre del anime luego de /anime")
