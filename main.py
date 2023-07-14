@@ -7,6 +7,7 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from func.api_anilist import search_anime, search_manga
 from func.bot_welcome import send_welcome
+from func.sticker_info import sticker_info
 load_dotenv()
 
 
@@ -21,6 +22,9 @@ Token = os.getenv('BOT_API')
 bot = telebot.TeleBot(Token)
 
 
+@bot.message_handler(commands=['sticker_info'])
+def send_sticker_info(message):
+    sticker_info(message)
 
 # Definimos una función que será llamada cuando ocurra un cambio en los miembros del grupo
 @bot.message_handler(content_types=['new_chat_members'])
