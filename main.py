@@ -1,10 +1,12 @@
 import os
 import re
 import telebot
+from telebot.types import ChatMemberUpdated
 import requests
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from func.api_anilist import search_anime, search_manga
+from func.bot_welcome import send_welcome
 load_dotenv()
 
 
@@ -18,6 +20,15 @@ Token = os.getenv('BOT_API')
 
 bot = telebot.TeleBot(Token)
 
+
+
+# Definimos una función que será llamada cuando ocurra un cambio en los miembros del grupo
+@bot.message_handler(content_types=['new_chat_members'])
+def on_chat_member_updated(message):
+    # Verificamos si el objeto JSON contiene la clave "new_chat_members"
+    if 'new_chat_members' in message.json:
+        # Si el cambio es una nueva persona que se unió al grupo, llamamos a la función "send_welcome"
+        send_welcome(message)
 
 
 @bot.message_handler(commands=['start'])
