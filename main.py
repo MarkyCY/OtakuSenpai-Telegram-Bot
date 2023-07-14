@@ -1,5 +1,6 @@
 import os
 import re
+import random
 import telebot
 from telebot.types import ChatMemberUpdated
 import requests
@@ -263,6 +264,29 @@ def unban_user(message):
     else:
         # envía un mensaje de error si el usuario no tiene los permisos necesarios
         bot.reply_to(message, "Debes ser administrador o el creador del chat para ejecutar este comando.")
+
+
+
+#Base de datos de prueba
+#"{Comamand}": ["Random Answer", "Random Answer", "Random Answer"]
+db = {
+    "te quiero, aki": ["Yo te quiero maaas!", "Yo te Amooooo", "Wiiiiii"],
+    "akira, despierta": ["Ahhh!! Aquí estoy", "Ya!! Estoy despiertaaa!", "Wenaaaaas que hora es?"],
+    "chupiti": ["Respuesta 7", "Respuesta 8", "Respuesta 9"]
+}
+
+#Creo las expresiones regulares a partir de los datos de la base de datos
+pattern = re.compile("|".join(db.keys()))
+
+@bot.message_handler(func=lambda message: pattern.search(message.text))
+def triggers(message):
+    #Esta función devuelve los triggers asignados en la base de datos con las respuestas aleatorias que sean es puro entretenimiento la base de datos usada es solo de prueba
+    match = pattern.search(message.text)
+    if match:
+        trigger = match.group()
+        response = random.choice(db[trigger])
+        bot.send_message(message.chat.id, response)
+
 
 if __name__ == '__main__':
     bot.set_my_commands([
