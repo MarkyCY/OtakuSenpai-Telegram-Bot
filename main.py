@@ -2,7 +2,6 @@ import os
 import re
 import random
 import telebot
-import datetime
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
