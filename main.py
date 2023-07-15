@@ -69,33 +69,40 @@ def anime(message):
         referral_all = message.text.split(" ")
         anime_name = " ".join(referral_all[1:])
         anime = search_anime(anime_name)
+        if 'errors' in anime:
+            for error in anime['errors']:
+                match error['message']:
+                    case "Not Found.":
+                        bot.send_message(message.chat.id, f"Anime no encontrado 🙁")
+                    case _:
+                        bot.send_message(message.chat.id, error['message'])
+        else:
+            name = anime['data']['Media']['title']['english']
+            if (name is None):
+                name = anime['data']['Media']['title']['romaji']
 
-        name = anime['data']['Media']['title']['english']
-        if (name is None):
-            name = anime['data']['Media']['title']['romaji']
+            duration = anime['data']['Media']['duration']
+            episodes = anime['data']['Media']['episodes']
+            status = anime['data']['Media']['status']
+            isAdult = anime['data']['Media']['isAdult']
+            match isAdult:
+                case True:
+                    adult = "Si"
+                case False:
+                    adult = "No"
+                case _:
+                    adult = "Desconocido"
 
-        duration = anime['data']['Media']['duration']
-        episodes = anime['data']['Media']['episodes']
-        status = anime['data']['Media']['status']
-        isAdult = anime['data']['Media']['isAdult']
-        match isAdult:
-            case True:
-                adult = "Si"
-            case False:
-                adult = "No"
-            case _:
-                adult = "Desconocido"
+            html_regex = re.compile(r'<[^>]+>')
+            description = re.sub(html_regex, '', anime['data']['Media']['description'])[:500]
+            image = anime['data']['Media']['coverImage']['large']
+            res = requests.get(image)
+            print(res.status_code, cid)
+            with open("./file/" + name + ".jpg", 'wb') as out:
+                out.write(res.content)
+            foto = open("./file/" + name + ".jpg", "rb")
 
-        html_regex = re.compile(r'<[^>]+>')
-        description = re.sub(html_regex, '', anime['data']['Media']['description'])[:500]
-        image = anime['data']['Media']['coverImage']['large']
-        res = requests.get(image)
-        print(res.status_code, cid)
-        with open("./file/" + name + ".jpg", 'wb') as out:
-            out.write(res.content)
-        foto = open("./file/" + name + ".jpg", "rb")
-
-        msg = f"""
+            msg = f"""
 <strong>{name}</strong> 
 <strong>Duración de cada Cap:</strong> {duration} min
 <strong>Episodios:</strong> {episodes}
@@ -106,7 +113,7 @@ def anime(message):
 <strong>Estado:</strong> {status}
 <strong>Para Adultos?:</strong> {adult}
 """
-        bot.send_photo(cid, foto, msg, parse_mode="html")
+            bot.send_photo(cid, foto, msg, parse_mode="html")
     else:
         bot.send_message(message.chat.id, f"Debes poner el nombre del anime luego de /anime")
 
@@ -114,38 +121,45 @@ def anime(message):
 
 
 @bot.message_handler(commands=['manga'])
-def anime(message):
+def manga(message):
     cid = message.chat.id
     if len(message.text.split('/manga ')) > 1:
         referral_all = message.text.split(" ")
-        anime_name = " ".join(referral_all[1:])
-        anime = search_manga(anime_name)
+        manga_name = " ".join(referral_all[1:])
+        manga = search_manga(manga_name)
+        if 'errors' in manga:
+            for error in manga['errors']:
+                match error['message']:
+                    case "Not Found.":
+                        bot.send_message(message.chat.id, f"Manga no encontrado 😣")
+                    case _:
+                        bot.send_message(message.chat.id, error['message'])
+        else:
+            name = manga['data']['Media']['title']['english']
+            if (name is None):
+                name = manga['data']['Media']['title']['romaji']
 
-        name = anime['data']['Media']['title']['english']
-        if (name is None):
-            name = anime['data']['Media']['title']['romaji']
+            status = manga['data']['Media']['status']
+            isAdult = manga['data']['Media']['isAdult']
+            match isAdult:
+                case True:
+                    adult = "Si"
+                case False:
+                    adult = "No"
+                case _:
+                    adult = "Desconocido"
 
-        status = anime['data']['Media']['status']
-        isAdult = anime['data']['Media']['isAdult']
-        match isAdult:
-            case True:
-                adult = "Si"
-            case False:
-                adult = "No"
-            case _:
-                adult = "Desconocido"
+            html_regex = re.compile(r'<[^>]+>')
+            description = re.sub(html_regex, '', manga['data']['Media']['description'])
 
-        html_regex = re.compile(r'<[^>]+>')
-        description = re.sub(html_regex, '', anime['data']['Media']['description'])
+            image = manga['data']['Media']['coverImage']['large']
+            res = requests.get(image)
+            print(res.status_code, cid)
+            with open("./file/" + name + ".jpg", 'wb') as out:
+                out.write(res.content)
+            foto = open("./file/" + name + ".jpg", "rb")
 
-        image = anime['data']['Media']['coverImage']['large']
-        res = requests.get(image)
-        print(res.status_code, cid)
-        with open("./file/" + name + ".jpg", 'wb') as out:
-            out.write(res.content)
-        foto = open("./file/" + name + ".jpg", "rb")
-
-        msg = f"""
+            msg = f"""
 <strong>{name}</strong> 
 <strong>Descripción:</strong>
 {description}
@@ -154,7 +168,7 @@ def anime(message):
 <strong>Para Adultos?:</strong> {adult}
 """
         
-        bot.send_photo(cid, foto, msg, parse_mode="html")
+            bot.send_photo(cid, foto, msg, parse_mode="html")
     else:
         bot.send_message(message.chat.id, f"Debes poner el nombre del manga luego de /manga")
 
