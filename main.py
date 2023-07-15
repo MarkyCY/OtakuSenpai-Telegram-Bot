@@ -175,89 +175,68 @@ def manga(message):
     
 @bot.message_handler(commands=['ban'])
 def ban_user(message):
-    #verifica si el usuario que envió el mensaje es un administrador o el creador del chat
-    chat_id = message.chat.id
-    user_id = message.from_user.id
-    chat_member = bot.get_chat_member(chat_id, user_id)
-    if chat_member.status in ['administrator', 'creator']:
-        #verifica si se hizo reply a un mensaje
-        if message.reply_to_message:
-            #obtén el ID del chat y del usuario que envió el mensaje
-            chat_id = message.chat.id
-            user_id = message.reply_to_message.from_user.id
-            user_name = message.reply_to_message.from_user.username
+    if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
+        #verifica si el usuario que envió el mensaje es un administrador o el creador del chat
+        chat_id = message.chat.id
+        user_id = message.from_user.id
+        chat_member = bot.get_chat_member(chat_id, user_id)
+        if chat_member.status in ['administrator', 'creator']:
+            #verifica si se hizo reply a un mensaje
+            if message.reply_to_message:
+                #obtén el ID del chat y del usuario que envió el mensaje
+                chat_id = message.chat.id
+                user_id = message.reply_to_message.from_user.id
+                user_name = message.reply_to_message.from_user.username
 
-            #verifica si el usuario que envió el mensaje es distinto al que se quiere banear
-            if user_id != message.from_user.id:
-                #obtén información sobre el usuario que se quiere banear
-                chat_member = bot.get_chat_member(chat_id, user_id)
+                #verifica si el usuario que envió el mensaje es distinto al que se quiere banear
+                if user_id != message.from_user.id:
+                    #obtén información sobre el usuario que se quiere banear
+                    chat_member = bot.get_chat_member(chat_id, user_id)
 
-                #verifica si el usuario que se quiere banear es un administrador
-                if chat_member.status not in ['administrator', 'creator']:
-                    #banear al usuario
-                    bot.kick_chat_member(chat_id, user_id)
+                    #verifica si el usuario que se quiere banear es un administrador
+                    if chat_member.status not in ['administrator', 'creator']:
+                        #banear al usuario
+                        bot.kick_chat_member(chat_id, user_id)
 
-                    #envía un mensaje de confirmación
-                    bot.reply_to(message, "Baneado! Fue bueno mientras duró.")
-                    bot.reply_to(message, "A quien quiero engañar... Buajajaja!")
-                else:
-                    #envía un mensaje de error si se intenta banear a un administrador y una bromita para el pana :)
-                    if(user_name == "YosvelPG"):
-                        bot.reply_to(message, "No puedes banear a un furro calvo y además admin. Aunque a mi papá si le gustaría...")
+                        #envía un mensaje de confirmación
+                        bot.reply_to(message, "Baneado! Fue bueno mientras duró.")
+                        bot.reply_to(message, "A quien quiero engañar... Buajajaja!")
                     else:
-                        bot.reply_to(message, "No puedes banear a otro administrador, estás loco o qué?.")
+                        #envía un mensaje de error si se intenta banear a un administrador y una bromita para el pana :)
+                        if(user_name == "YosvelPG"):
+                            bot.reply_to(message, "No puedes banear a un furro calvo y además admin. Aunque a mi papá si le gustaría...")
+                        else:
+                            bot.reply_to(message, "No puedes banear a otro administrador, estás loco o qué?.")
+                else:
+                    #envía un mensaje de error si el usuario intenta banearte a ti mismo
+                    bot.reply_to(message, "No te puedes banear a ti mismo pirado!")
             else:
-                #envía un mensaje de error si el usuario intenta banearte a ti mismo
-                bot.reply_to(message, "No te puedes banear a ti mismo pirado!")
+                #envía un mensaje de error si no se hizo reply a un mensaje
+                bot.reply_to(message, "Oye si no haces Reply a un mensaje no puedo hacer mucho.")
         else:
-            #envía un mensaje de error si no se hizo reply a un mensaje
-            bot.reply_to(message, "Oye si no haces Reply a un mensaje no puedo hacer mucho.")
+            #envía un mensaje de error si el usuario no tiene los permisos necesarios
+            bot.reply_to(message, "Debes ser administrador o el creador del grupo para ejecutar este comando. Simple mortal hump!")
     else:
-        #envía un mensaje de error si el usuario no tiene los permisos necesarios
-        bot.reply_to(message, "Debes ser administrador o el creador del grupo para ejecutar este comando. Simple mortal hump!")
+        bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
 
 
 @bot.message_handler(commands=['unban'])
 def unban_user(message):
-    # obtén el ID del chat
-    chat_id = message.chat.id
+    if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
+        # obtén el ID del chat
+        chat_id = message.chat.id
 
-    # verifica si el usuario que envió el mensaje es un administrador o el creador del chat
-    user_id = message.from_user.id
-    chat_member = bot.get_chat_member(chat_id, user_id)
-    if chat_member.status in ['administrator', 'creator']:
-        # verifica si se hizo reply a un mensaje
-        if message.reply_to_message:
-            # obtén el ID del usuario que envió el mensaje
-            user_id = message.reply_to_message.from_user.id
-
-            # verifica si el usuario ya ha sido desbaneado
-            chat_member = bot.get_chat_member(chat_id, user_id)
-            if chat_member.is_member:
-                # envía un mensaje de confirmación
-                bot.reply_to(message, "El usuario no estaba baneado.")
-            else:
-                # verifica si el usuario que se quiere desbanear es un administrador
-                if chat_member.status not in ['administrator', 'creator']:
-                    # desbanear al usuario
-                    bot.unban_chat_member(chat_id, user_id)
-
-                    # envía un mensaje de confirmación
-                    bot.reply_to(message, "Usuario desbaneado.")
-                else:
-                    # envía un mensaje de error si se intenta desbanear a un administrador
-                    bot.reply_to(message, "No puedes desbanear a un administrador.")
-        else:
-            # verifica si se ingresó el nombre de usuario
-            if len(message.text.split()) > 1:
-                # obtén el nombre de usuario ingresado
-                username = message.text.split()[1]
-
-                # obtén información sobre el usuario
-                user = bot.get_chat_member(chat_id, username).user
+        # verifica si el usuario que envió el mensaje es un administrador o el creador del chat
+        user_id = message.from_user.id
+        chat_member = bot.get_chat_member(chat_id, user_id)
+        if chat_member.status in ['administrator', 'creator']:
+            # verifica si se hizo reply a un mensaje
+            if message.reply_to_message:
+                # obtén el ID del usuario que envió el mensaje
+                user_id = message.reply_to_message.from_user.id
 
                 # verifica si el usuario ya ha sido desbaneado
-                chat_member = bot.get_chat_member(chat_id, user.id)
+                chat_member = bot.get_chat_member(chat_id, user_id)
                 if chat_member.is_member:
                     # envía un mensaje de confirmación
                     bot.reply_to(message, "El usuario no estaba baneado.")
@@ -265,19 +244,46 @@ def unban_user(message):
                     # verifica si el usuario que se quiere desbanear es un administrador
                     if chat_member.status not in ['administrator', 'creator']:
                         # desbanear al usuario
-                        bot.unban_chat_member(chat_id, user.id)
+                        bot.unban_chat_member(chat_id, user_id)
 
                         # envía un mensaje de confirmación
-                        bot.reply_to(message, "Listo el usuario puede entrar cuando quiera.")
+                        bot.reply_to(message, "Usuario desbaneado.")
                     else:
                         # envía un mensaje de error si se intenta desbanear a un administrador
-                        bot.reply_to(message, "No puedes usar este comando con un administrador.")
+                        bot.reply_to(message, "No puedes desbanear a un administrador.")
             else:
-                # envía un mensaje de ayuda si no se hizo reply a un mensaje ni se ingresó el nombre de usuario
-                bot.reply_to(message, "Debes hacer reply a un mensaje o ingresar el nombre de usuario para poder desbanear al usuario. Por ejemplo: /unban <nombre_de_usuario>")
+                # verifica si se ingresó el nombre de usuario
+                if len(message.text.split()) > 1:
+                    # obtén el nombre de usuario ingresado
+                    username = message.text.split()[1]
+
+                    # obtén información sobre el usuario
+                    user = bot.get_chat_member(chat_id, username).user
+
+                    # verifica si el usuario ya ha sido desbaneado
+                    chat_member = bot.get_chat_member(chat_id, user.id)
+                    if chat_member.is_member:
+                        # envía un mensaje de confirmación
+                        bot.reply_to(message, "El usuario no estaba baneado.")
+                    else:
+                        # verifica si el usuario que se quiere desbanear es un administrador
+                        if chat_member.status not in ['administrator', 'creator']:
+                            # desbanear al usuario
+                            bot.unban_chat_member(chat_id, user.id)
+
+                            # envía un mensaje de confirmación
+                            bot.reply_to(message, "Listo el usuario puede entrar cuando quiera.")
+                        else:
+                            # envía un mensaje de error si se intenta desbanear a un administrador
+                            bot.reply_to(message, "No puedes usar este comando con un administrador.")
+                else:
+                    # envía un mensaje de ayuda si no se hizo reply a un mensaje ni se ingresó el nombre de usuario
+                    bot.reply_to(message, "Debes hacer reply a un mensaje o ingresar el nombre de usuario para poder desbanear al usuario. Por ejemplo: /unban <nombre_de_usuario>")
+        else:
+            # envía un mensaje de error si el usuario no tiene los permisos necesarios
+            bot.reply_to(message, "Debes ser administrador o el creador del chat para ejecutar este comando.")
     else:
-        # envía un mensaje de error si el usuario no tiene los permisos necesarios
-        bot.reply_to(message, "Debes ser administrador o el creador del chat para ejecutar este comando.")
+        bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
 
 
 
@@ -294,12 +300,13 @@ pattern = re.compile("|".join(db.keys()))
 
 @bot.message_handler(func=lambda message: pattern.search(message.text))
 def triggers(message):
-    #Esta función devuelve los triggers asignados en la base de datos con las respuestas aleatorias que sean es puro entretenimiento la base de datos usada es solo de prueba
-    match = pattern.search(message.text)
-    if match:
-        trigger = match.group()
-        response = random.choice(db[trigger])
-        bot.send_message(message.chat.id, response)
+    if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
+        #Esta función devuelve los triggers asignados en la base de datos con las respuestas aleatorias que sean es puro entretenimiento la base de datos usada es solo de prueba
+        match = pattern.search(message.text)
+        if match:
+            trigger = match.group()
+            response = random.choice(db[trigger])
+            bot.send_message(message.chat.id, response)
 
 
 if __name__ == '__main__':
