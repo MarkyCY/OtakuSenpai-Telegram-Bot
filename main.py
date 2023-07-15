@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from func.api_anilist import search_anime, search_manga
 from func.bot_welcome import send_welcome
 from func.sticker_info import sticker_info
+from func.warn import warn_user
 load_dotenv()
 
 
@@ -285,6 +286,9 @@ def unban_user(message):
     else:
         bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
 
+@bot.message_handler(commands=['warn'])
+def command_warn_user(message):
+    warn_user(message)
 
 
 #Base de datos de prueba
