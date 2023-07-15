@@ -2,8 +2,11 @@ import os
 import re
 import random
 import telebot
+import datetime
 from pymongo import MongoClient
 from dotenv import load_dotenv
+
+
 #Other Command
 from func.bot_welcome import send_welcome
 from func.sticker_info import sticker_info
@@ -11,6 +14,8 @@ from func.sticker_info import sticker_info
 from func.admin.warn import warn_user
 from func.admin.ban import ban_user
 from func.admin.unban import unban_user
+from func.admin.unmute import unmute_user
+from func.admin.mute import mute_user
 #Api Anilist Use
 from func.anilist.search_manga import show_manga
 from func.anilist.search_anime import show_anime
@@ -91,6 +96,15 @@ def start_unban_user(message):
 def command_warn_user(message):
     warn_user(message)
 
+
+@bot.message_handler(commands=['mute'])
+def command_mute_user(message):
+    mute_user(message)
+
+
+@bot.message_handler(commands=['unmute'])
+def command_unmute_user(message):
+    unmute_user(message)
 
 #Base de datos de prueba
 #"{Comamand}": ["Random Answer", "Random Answer", "Random Answer"]
