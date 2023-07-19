@@ -84,6 +84,11 @@ def anime(message):
 def manga(message):
     show_manga(message)
 
+
+@bot.message_handler(commands=['sub'])
+def command_to_subscribe(message):
+    subscribe_user(message)
+
     
 @bot.message_handler(commands=['ban'])
 def start_ban_user(message):
