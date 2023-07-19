@@ -5,7 +5,12 @@ import telebot
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from telebot.apihelper import ApiTelegramException
-
+#Horarios
+import threading
+import time
+import pytz
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 #Other Command
 from func.bot_welcome import send_welcome
@@ -139,6 +144,76 @@ def triggers(message):
             bot.reply_to(message, response)
 
 
+# Define una lista para almacenar los datos de los usuarios que están en el flujo de conversación
+users_in_flow = []
+
+def scheduled_task():
+    user_lst = []
+    for user in contest.find({'contest_num': 1}):
+                for sub in user['subscription']:
+                    user_lst.append(sub['user'])
+
+    for user_id in user_lst:
+        bot.send_message(user_id, "Bien tienes 1 minuto para hallar la palabra magica y poderosa que @MarkyWTF ha seleccionado si lo conoces puede que la encuentres")
+
+    time.sleep(10)
+
+    for user_id in user_lst:
+        msg = bot.send_message(user_id, "Listo, escribe la palabra mágica:")
+        # Registrar la siguiente función para manejar la respuesta
+        timer = threading.Timer(60.0, timeout_handler, args=[user_id])
+        timer.start()
+        users_in_flow.append({'user_id': user_id, 'timer': timer})
+        bot.register_next_step_handler(msg, prueba)
+
+def prueba(message):
+    if message.text is not None:
+        if message.text.lower() == "calvo":
+            msg = bot.send_message(message.from_user.id, "No ya no es esa...")
+            bot.register_next_step_handler(msg, prueba)
+        elif message.text.lower() != "mamawebo":
+            res = ["Jajaja no te acerques ni calentando", "Nooo, pero qué mal estás!", "¿Eso fue lo mejor que pudiste pensar?", "¡Ay, qué desastre!", "No, ni cerca. ¿En serio lo intentaste?", "¿Esa respuesta en serio?", "Jajaja, no te acerques ni por asomo.", "Esa respuesta es peor que el silencio.", "Qué lástima, esperaba más de ti.", "No, no, no. ¿Necesitas ayuda?", "¿Esa respuesta fue en serio o me estás troleando?", "¡No, no, no! ¿Dónde dejaste el cerebro?", "Si esa es tu mejor respuesta, mejor ni lo intentes."]
+            response = random.choice(res)
+            msg = bot.send_message(message.from_user.id, response)
+            bot.register_next_step_handler(msg, prueba)
+        else:
+            bot.send_message(message.from_user.id, f'Waaa has respondido bieeen!!! Le avisaré a todos')
+            clear_flow_by_user_id(message.chat.id)
+            for user in contest.find({'contest_num': 1}):
+                for sub in user['subscription']:
+                    bot.send_message(sub['user'], f'Eeeey @{message.from_user.username} ha respondido bieeeen!')
+    else:
+        bot.send_message(message.from_user.id, "Necesito Texto Textoooooo!!!")
+
+def timeout_handler(user_id):
+    # Enviar un mensaje de tiempo agotado y cancelar el flujo de conversación para este usuario
+    bot.send_message(user_id, 'Lo siento, se ha agotado el tiempo. Vuelve a intentarlo.')
+    clear_flow_by_user_id(user_id)
+
+def clear_timer_by_user_id(user_id):
+    # Buscar el temporizador correspondiente al usuario y cancelarlo
+    for user_data in users_in_flow:
+        if user_data['user_id'] == user_id:
+            user_data['timer'].cancel()
+            users_in_flow.remove(user_data)
+            break
+
+def clear_flow_by_user_id(user_id):
+    # Cancelar el flujo de conversación para el usuario y limpiar su temporizador
+    bot.clear_step_handler_by_chat_id(user_id)
+    clear_timer_by_user_id(user_id)
+
+# Obtener la lista de usuarios desde la base de datos o desde otro lugar
+
+# Crea una instancia de BackgroundScheduler
+scheduler = BackgroundScheduler()
+# Obtiene una instancia de pytz para la zona horaria deseada
+tz = pytz.timezone('Cuba')
+# Programa la tarea para que se ejecute cada hora CronTrigger(hour=22, minute=34, timezone=tz)
+scheduler.add_job(scheduled_task, CronTrigger(hour=21, minute=44, timezone=tz))
+
+# Inicia el scheduler
+scheduler.start()
 
 if __name__ == '__main__':
     bot.set_my_commands([
