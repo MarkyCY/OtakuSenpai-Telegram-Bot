@@ -46,7 +46,7 @@ def mute_user(message):
                 user_id = message.reply_to_message.from_user.id
                 chat_member = bot.get_chat_member(message.chat.id, user_id)                
 
-                user_to_mute = message.reply_to_message.from_user
+                user_to_mute = bot.get_chat_member(message.chat.id, message.reply_to_message.from_user.id)
                 if len(message.text.split()) > 1:
                     reason = message.text.split()[1]
                     match = re.match(r'^(\d+)([dhm])$', reason)
