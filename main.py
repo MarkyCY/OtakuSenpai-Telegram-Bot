@@ -15,6 +15,7 @@ from apscheduler.triggers.cron import CronTrigger
 #Other Command
 from func.bot_welcome import send_welcome
 from func.sticker_info import sticker_info
+from func.list_admins import list_admins
 #Admin Command
 from func.admin.warn import warn_user
 from func.admin.ban import ban_user
@@ -94,37 +95,41 @@ def manga(message):
 def command_to_subscribe(message):
     subscribe_user(message)
 
+
+@bot.message_handler(commands=['list_admins'])
+def command_list_admins(message):
+    list_admins(message)
+    
+
     
 @bot.message_handler(commands=['ban'])
 def start_ban_user(message):
-    ban_user(message)
-
-
-@bot.message_handler(commands=['list_admins'])
-def list_admins(message):
-    # obtén la información del chat
-    chat_id = message.chat.id
-    chat_info = bot.get_chat(chat_id)
-    # obtén la lista de administradores del chat
-    admins = bot.get_chat_administrators(chat_id)
-    # crea una lista vacía para los nombres de los administradores (ignorando los bots)
-    admin_names = []
-    # itera sobre la lista de administradores y agrega los nombres de los que no son bots a la lista
-    for admin in admins:
-        if not admin.user.is_bot:
-            admin_names.append(admin.user)
-    # envía un mensaje con la lista de administradores al chat
-    bot.send_message(chat_id, f"Los administradores de {chat_info.title} son:\n" + "\n".join([f'<a href="https://t.me/{user.username}">{user.first_name}</a>' for user in admin_names]), parse_mode='html', disable_web_page_preview=True)
+    try:
+        ban_user(message)
+    except ApiTelegramException as err:
+        print(err)
+        bot.send_message(message.from_user.id, f"Hola, mira esta es la razón por la que no se pudo ejecutar bien el comando: {err.description}")
+        bot.reply_to(message, f"No se pudo ejecutar esta acción.")
     
 
 @bot.message_handler(commands=['unban'])
 def start_unban_user(message):
-    unban_user(message)
+    try:
+        unban_user(message)
+    except ApiTelegramException as err:
+        print(err)
+        bot.send_message(message.from_user.id, f"Hola, mira esta es la razón por la que no se pudo ejecutar bien el comando: {err.description}")
+        bot.reply_to(message, f"No se pudo ejecutar esta acción.")
 
 
 @bot.message_handler(commands=['warn'])
 def command_warn_user(message):
-    warn_user(message)
+    try:
+        warn_user(message)
+    except ApiTelegramException as err:
+        print(err)
+        bot.send_message(message.from_user.id, f"Hola, mira esta es la razón por la que no se pudo ejecutar bien el comando: {err.description}")
+        bot.reply_to(message, f"No se pudo ejecutar esta acción.")
 
 
 @bot.message_handler(commands=['mute'])
@@ -139,7 +144,12 @@ def command_mute_user(message):
 
 @bot.message_handler(commands=['unmute'])
 def command_unmute_user(message):
-    unmute_user(message)
+    try:
+        unmute_user(message)
+    except ApiTelegramException as err:
+        print(err)
+        bot.send_message(message.from_user.id, f"Hola, mira esta es la razón por la que no se pudo ejecutar bien el comando: {err.description}")
+        bot.reply_to(message, f"No se pudo ejecutar esta acción.")
 
 #Base de datos de prueba
 db = {
