@@ -16,6 +16,7 @@ from apscheduler.triggers.cron import CronTrigger
 from func.bot_welcome import send_welcome
 from func.sticker_info import sticker_info
 from func.list_admins import list_admins
+from func.report import report
 #Admin Command
 from func.admin.warn import warn_user
 from func.admin.ban import ban_user
@@ -100,6 +101,10 @@ def command_to_subscribe(message):
 def command_list_admins(message):
     list_admins(message)
     
+
+@bot.message_handler(commands=['report'])
+def command_report(message):
+    report(message)
 
     
 @bot.message_handler(commands=['ban'])
