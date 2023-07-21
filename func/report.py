@@ -11,6 +11,12 @@ bot = telebot.TeleBot(Token)
 def report(message):
     # obtén la información del chat
     if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
+
+        chat_member = bot.get_chat_member(chat_id, message.from_user.id)
+        if chat_member.status in ['administrator', 'creator']:
+            bot.send_message(message.chat.id, f"Este comando no está disponible para administradores")
+            return
+        
         if message.reply_to_message:
             chat_id = message.chat.id
             # obtén la lista de administradores del chat
