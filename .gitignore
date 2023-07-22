@@ -1,2 +1,4 @@
 .env
 file
+*.pyc
+data/
