@@ -11,7 +11,9 @@ import time
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-
+#Triggers
+from func.triggers.trigg import mostrar_pagina
+from func.callback_query import callback_query
 #Other Command
 from func.bot_welcome import send_welcome
 from func.info import info
@@ -37,11 +39,16 @@ load_dotenv()
 client = MongoClient('localhost', 27017)
 db = client.otakusenpai
 contest = db.contest
+Triggers = db.triggers
 
-#VARIABLES GLOBALES .ENV
+#VARIABLES DE ENTORNO .ENV
 Token = os.getenv('BOT_API')
 
 bot = telebot.TeleBot(Token)
+
+@bot.callback_query_handler(func=lambda x: True)
+def respuesta_botones_inline(call):
+    callback_query(call)
 
 
 @bot.message_handler(commands=['sticker_info'])
@@ -92,6 +99,18 @@ def command_list_admins(message):
 def command_report(message):
     report(message)
 
+#Triggers
+@bot.message_handler(commands=['triggers'])
+def command_triggers(message):
+    resul = Triggers.find()
+    trigger_list = [] # Declaramos una lista vacía para almacenar los triggers
+    for doc in resul:
+        trigger_list.append(doc) # Agregamos cada documento a la lista
+
+    #bot.send_message(message.chat.id, texto, parse_mode="html")
+    mostrar_pagina(trigger_list, message.chat.id, message.from_user.id)
+
+#End Triggers
     
 @bot.message_handler(commands=['ban'])
 def start_ban_user(message):
@@ -143,22 +162,23 @@ def command_unmute_user(message):
         bot.reply_to(message, f"No se pudo ejecutar esta acción.")
 
 #Base de datos de prueba
-db = {
-    "te quiero, aki": ["Yo te quiero maaas!", "Yo te Amooooo", "Wiiiiii"],
-    "akira, despierta": ["Ahhh!! Aquí estoy", "Ya!! Estoy despiertaaa!", "Wenaaaaas que hora es?"],
-    "a trabajar": ["Vamoooooos", "Aye Sir!!", "Shi"]
-}
-#Creo las expresiones regulares a partir de los datos de la base de datos
-pattern = re.compile("|".join(db.keys()))
-
-@bot.message_handler(func=lambda message: pattern.search(message.text))
-def triggers(message):
-    if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
-        #Esta función devuelve los triggers asignados en la base de datos con las respuestas aleatorias que sean es puro entretenimiento la base de datos usada es solo de prueba
+@bot.message_handler(func=lambda message: True)
+def handle_message(message):
+    # Check if the message is from a group or a supergroup
+    if message.chat.type in ['group', 'supergroup']:
+        # Get all the triggers and their corresponding responses from the database
+        triggers = {}
+        for doc in Triggers.find():
+            triggers[doc["triggers"]] = doc["list_text"]
+        # Create a regular expression pattern from the triggers
+        pattern = re.compile("|".join(triggers.keys()))
+        # Get the trigger from the message text
         match = pattern.search(message.text)
         if match:
             trigger = match.group()
-            response = random.choice(db[trigger])
+            # Get a random response for the trigger from the database
+            response = random.choice(triggers[trigger])
+            # Send the response to the group or supergroup
             bot.reply_to(message, response)
 
 
