@@ -11,9 +11,12 @@ import time
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-#Triggers
-from func.triggers.trigg import mostrar_pagina
-from func.callback_query import callback_query
+
+from telebot.types import InlineKeyboardMarkup
+from telebot.types import InlineKeyboardButton
+import pickle
+from bson import ObjectId
+
 #Other Command
 from func.bot_welcome import send_welcome
 from func.info import info
@@ -41,14 +44,124 @@ db = client.otakusenpai
 contest = db.contest
 Triggers = db.triggers
 
-#VARIABLES DE ENTORNO .ENV
+#VARIABLES GLOBALES .ENV
 Token = os.getenv('BOT_API')
+
+ROW_X_PAGE = int(os.getenv('ROW_X_PAGE'))
+
 
 bot = telebot.TeleBot(Token)
 
 @bot.callback_query_handler(func=lambda x: True)
 def respuesta_botones_inline(call):
-    callback_query(call)
+    cid = call.message.chat.id
+    mid = call.message.message_id
+    uid = call.from_user.id
+
+    chat_member = bot.get_chat_member(cid, uid)
+
+    if chat_member.status not in ['administrator', 'creator']:
+        bot.answer_callback_query(call.id, "Solo los administradores pueden usar este comando.")
+        return
+
+    datos = pickle.load(open(f'./data/{cid}_{mid}', 'rb'))
+
+    if datos["user_id"] != uid:
+        bot.answer_callback_query(call.id, "Tu no pusiste este comando...")
+        return
+
+    if call.data == "close":
+        bot.delete_message(cid, mid)
+        os.remove(f'./data/{cid}_{mid}')
+        return
+    
+    if call.data == "add":
+        add_trigger(cid, uid, mid)
+        return
+
+    if call.data == "back":
+        pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+        mostrar_pagina(datos['lista'], cid, uid, datos["pag"], mid)
+        return
+    
+    if call.data == "prev":
+        if datos["pag"] == 0:
+            bot.answer_callback_query(call.id, "Ya estás en la primera página")
+        else:
+            datos["pag"]-= 1
+            pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+            mostrar_pagina(datos['lista'], cid, uid, datos["pag"], mid)
+        return
+
+    if call.data == "next":
+        if datos["pag"] * ROW_X_PAGE + ROW_X_PAGE >= len(datos["lista"]):
+            bot.answer_callback_query(call.id, "Ya estás en la ultima página")
+        else:
+            datos["pag"]+= 1
+            pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+            mostrar_pagina(datos["lista"], cid, uid, datos["pag"], mid)
+        return
+    
+    if ObjectId.is_valid(call.data):
+        mostrar_triggers(call.data, cid, mid)
+        return
+    
+
+    def is_valid_edit(variable):
+        pattern = r"^[a-f\d]{24}_\d$"
+        return bool(re.match(pattern, variable))
+    def is_valid_push_trigger(variable):
+        pattern = r"^push_[a-f\d]{24}$"
+        return bool(re.match(pattern, variable))
+    def is_valid_edit_text(variable):
+        pattern = r"^edit_[a-f\d]{24}_\d$"
+        return bool(re.match(pattern, variable))
+    def is_delete_text(variable):
+        pattern = r"^del_[a-f\d]{24}_\d$"
+        return bool(re.match(pattern, variable))
+    def is_delete_trigger(variable):
+        pattern = r"^del_[a-f\d]{24}$"
+        return bool(re.match(pattern, variable))
+
+    if is_valid_edit(call.data):
+        partes = call.data.split("_")
+        o_id = partes[0]
+        sel = partes[1]
+        doc = Triggers.find_one({"_id": ObjectId(o_id)})
+
+        menu_trigger(cid, uid, doc['_id'], sel)
+        pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+        mostrar_pagina(datos["lista"], cid, uid, datos["pag"], mid)
+        return
+    
+    if is_delete_trigger(call.data):
+        partes = call.data.split("_")
+        o_id = partes[1]
+        del_trigger(cid, mid, o_id, uid)
+        return
+    
+    if is_valid_edit_text(call.data):
+        partes = call.data.split("_")
+        o_id = partes[1]
+        sel = partes[2]
+        os.remove(f'./data/{cid}_{mid}')
+        bot.delete_message(cid, mid)
+        edit_trigger(uid, uid, o_id, sel)
+        return
+    
+    if is_valid_push_trigger(call.data):
+        partes = call.data.split("_")
+        o_id = partes[1]
+        add_trigger_text(uid, uid, o_id)
+        pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+        mostrar_pagina(datos["lista"], cid, uid, datos["pag"], mid)
+        return
+    
+    if is_delete_text(call.data):
+        partes = call.data.split("_")
+        o_id = partes[1]
+        sel = partes[2]
+        del_trigger_text(cid, mid, o_id, sel)
 
 
 @bot.message_handler(commands=['sticker_info'])
@@ -102,14 +215,189 @@ def command_report(message):
 #Triggers
 @bot.message_handler(commands=['triggers'])
 def command_triggers(message):
+    if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
+        user_id = message.from_user.id
+        chat_id = message.chat.id
+        chat_member = bot.get_chat_member(chat_id, user_id)
+
+        if chat_member.status not in ['administrator', 'creator']:
+            bot.reply_to(message, "Solo los administradores pueden usar este comando.")
+            return
+
+        resul = Triggers.find()
+        trigger_list = [] # Declaramos una lista vacía para almacenar los triggers
+        for doc in resul:
+            trigger_list.append(doc) # Agregamos cada documento a la lista
+
+        #bot.send_message(message.chat.id, texto, parse_mode="html")
+        mostrar_pagina(trigger_list, message.chat.id, message.from_user.id)
+    else:
+        bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
+
+def mostrar_pagina(resul, cid, uid=None, pag=0, mid=None):
+    #crear botonera
+    markup = InlineKeyboardMarkup(row_width=5)
+    b_prev = InlineKeyboardButton("⬅️", callback_data="prev")
+    b_close = InlineKeyboardButton("❌", callback_data="close")
+    b_next = InlineKeyboardButton("➡️", callback_data="next")
+    b_add = InlineKeyboardButton("➕ Agregar Trigger", callback_data="add")
+    inicio = pag*ROW_X_PAGE #numero de inicio de la pagina
+    fin = pag*ROW_X_PAGE+ROW_X_PAGE #numero del fin de pagina
+
+    mensaje = f"<i>Resultados {inicio+1}-{fin} de {len(resul)}</i>\n\n"
+    n = 1
+    botones = []
+    for trigger in resul[inicio:fin]:
+        botones.append(InlineKeyboardButton(str(n), callback_data=str(trigger['_id'])))
+        mensaje+= f"[<b>{n}</b>] {trigger['triggers']}\n"
+        n+= 1
+    markup.row(b_add)
+    markup.add(*botones)
+    markup.row(b_prev, b_close, b_next)
+    if mid:
+        bot.edit_message_text(mensaje, cid, mid, reply_markup=markup, parse_mode="html")
+    else:
+        res = bot.send_message(cid, mensaje, reply_markup=markup, parse_mode="html")
+        mid = res.message_id
+
+        datos = {"pag":0, "lista":resul, "user_id": uid}
+        pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+
+def mostrar_triggers(id_trig, cid, mid):
+    #crear botonera
+    markup = InlineKeyboardMarkup(row_width=5)
+    documento = Triggers.find_one({"_id": ObjectId(id_trig)})
+    b_add = InlineKeyboardButton("➕ Agregar Texto", callback_data=f"push_{documento['_id']}")
+    b_del = InlineKeyboardButton("⚠️ Eliminar Trigger", callback_data=f"del_{documento['_id']}")
+    b_back = InlineKeyboardButton("🔙", callback_data="back")
+    b_close = InlineKeyboardButton("❌", callback_data="close")
+
+
+    mensaje = f"<i>Triggers:</i>\n\n"
+    n = 1
+    botones = []
+    for valor in documento['list_text']:
+        e = n - 1
+        botones.append(InlineKeyboardButton(str(n), callback_data=f"{id_trig}_{e}"))
+        mensaje+= f"[<b>{n}</b>] {valor}\n"
+        n+= 1
+    n=n-1
+    markup.add(*botones)
+    if n < 10:
+        markup.row(b_add, b_del)
+    markup.row(b_back, b_close)
+    bot.edit_message_text(mensaje, cid, mid, reply_markup=markup, parse_mode="html")
+
+
+def menu_trigger(cid, uid, o_id, sel):
+    markup = InlineKeyboardMarkup(row_width=5)
+    b_edit = InlineKeyboardButton("✍️ Editar", callback_data=f"edit_{o_id}_{sel}")
+    b_del = InlineKeyboardButton("➖ Eliminar", callback_data=f"del_{o_id}_{sel}")
+    b_cancel = InlineKeyboardButton("❌ Cancelar", callback_data=f"close")
+    markup.row(b_edit, b_del)
+    markup.row(b_cancel)
+    doc = Triggers.find_one({"_id": ObjectId(o_id)})
+    msg = bot.send_message(cid, f"Edición: <code>{doc['list_text'][int(sel)]}</code>\nSelecciona un botón:", reply_markup=markup, parse_mode="html")
+    mid = msg.message_id
+    datos = {"user_id": uid}
+    pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+    #bot.register_next_step_handler(msg, catch_trigger_text, uid, o_id, sel)
+
+def edit_trigger(cid, uid, o_id, sel):
+    doc = Triggers.find_one({"_id": ObjectId(o_id)})
+    msg = bot.send_message(cid, f"Escribe el reemplazo de <code>{doc['list_text'][int(sel)]}</code>:", parse_mode="html")
+    bot.register_next_step_handler(msg, catch_trigger_text, uid, o_id, sel)
+
+def catch_trigger_text(msg, uid, o_id, sel):
+    if msg.from_user.id == uid:
+        if msg.text is not None:
+            Triggers.update_one(
+               { "_id" : ObjectId(o_id) },
+               { "$set": { "list_text." + sel: msg.text } }
+            )
+            bot.send_message(msg.chat.id, f"Texto editado correctamente")
+        else:
+            bot.send_message(msg.chat.id, f"Texto no editado")
+
+def del_trigger_text(cid, mid, o_id, sel):
+    Triggers.update_one({"_id": ObjectId(o_id)}, {"$unset": {f"list_text.{sel}": 1}})
+    Triggers.update_one({"_id": ObjectId(o_id)}, {"$pull": {"list_text": None}})
+    os.remove(f'./data/{cid}_{mid}')
+    bot.delete_message(cid, mid)
+    bot.send_message(cid, f"Texto eliminado")
+
+
+def add_trigger_text(cid, uid, o_id):
+    msg = bot.send_message(cid, f"Escribe el nuevo Texto:")
+    bot.register_next_step_handler(msg, catch_new_trigger_text, uid, o_id, cid)
+
+def catch_new_trigger_text(msg, uid, o_id, cid):
+    if msg.from_user.id == uid:
+        if msg.text is not None:
+            Triggers.update_one(
+               { "_id" : ObjectId(o_id) },
+               { "$push": { "list_text": msg.text } }
+            )
+            msg = bot.send_message(msg.chat.id, f"Texto añadido correctamente")
+            time.sleep(5)
+            bot.delete_message(cid, msg.message_id)
+        else:
+            msg = bot.send_message(msg.chat.id, f"Texto no añadido")
+            time.sleep(5)
+            bot.delete_message(cid, msg.message_id)
+
+
+def add_trigger(cid, uid, msg_id):
+    msg = bot.send_message(uid, f"Escribe el nuevo Trigger:")
+    bot.register_next_step_handler(msg, catch_new_trigger, uid, msg_id, cid)
+
+def catch_new_trigger(msg, uid, msg_id, cid):
+    if msg.from_user.id == uid:
+        if msg.text is not None:
+            trigger = msg.text
+            msg = bot.send_message(msg.chat.id, f"Listo el trigger\n<code>{msg.text}</code>\nse añadió correctamente.\n Escriba el texto de este sticker:", parse_mode="html")
+            bot.register_next_step_handler(msg, catch_new_text_trigger, uid, trigger, msg_id, cid)
+        else:
+            bot.send_message(msg.chat.id, f"Acción cancelada")
+            bot.clear_step_handler_by_chat_id(uid)
+    else:
+        pass
+
+def catch_new_text_trigger(msg, uid, trigger, msg_id, cid):
+    if msg.from_user.id == uid:
+        if msg.text is not None:
+            Triggers.insert_one({ "triggers" : trigger, "list_text": [f"{msg.text}"] })
+            resul = Triggers.find()
+            trigger_list = []
+            for doc in resul:
+                trigger_list.append(doc)
+            page = 0
+            datos = {"pag":page, "lista":trigger_list, "user_id": uid}
+            os.remove(f'./data/{cid}_{msg_id}')
+            time.sleep(1)
+            pickle.dump(datos, open(f'./data/{cid}_{msg_id}', 'wb'))
+            mostrar_pagina(trigger_list, cid, uid, page, msg_id)
+            bot.send_message(msg.chat.id, f"Trigger <code>{trigger}</code> añadido correctamente con el texto <code>{msg.text}</code>", parse_mode="html")
+        else:
+            bot.send_message(msg.chat.id, f"Acción cancelada")
+    else:
+        pass
+
+def del_trigger(cid, mid, o_id, uid):
+    Triggers.delete_one({"_id": ObjectId(o_id)})
     resul = Triggers.find()
-    trigger_list = [] # Declaramos una lista vacía para almacenar los triggers
+    trigger_list = []
     for doc in resul:
-        trigger_list.append(doc) # Agregamos cada documento a la lista
-
-    #bot.send_message(message.chat.id, texto, parse_mode="html")
-    mostrar_pagina(trigger_list, message.chat.id, message.from_user.id)
-
+        trigger_list.append(doc)
+    page = 0
+    datos = {"pag":page, "lista":trigger_list, "user_id": uid}
+    os.remove(f'./data/{cid}_{mid}')
+    time.sleep(1)
+    pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+    mostrar_pagina(trigger_list, cid, uid, page, mid)
+    msg = bot.send_message(cid, f"Trigger eliminado")
+    time.sleep(5)
+    bot.delete_message(cid, msg.message_id)
 #End Triggers
     
 @bot.message_handler(commands=['ban'])
@@ -169,11 +457,11 @@ def handle_message(message):
         # Get all the triggers and their corresponding responses from the database
         triggers = {}
         for doc in Triggers.find():
-            triggers[doc["triggers"]] = doc["list_text"]
+            triggers[doc["triggers"].lower()] = doc["list_text"]
         # Create a regular expression pattern from the triggers
         pattern = re.compile("|".join(triggers.keys()))
         # Get the trigger from the message text
-        match = pattern.search(message.text)
+        match = pattern.search(message.text.lower())
         if match:
             trigger = match.group()
             # Get a random response for the trigger from the database
@@ -259,6 +547,8 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/anime", "Buscar información sobre un anime"),
         telebot.types.BotCommand("/manga", "Buscar información sobre un manga"),
         telebot.types.BotCommand("/info", "Ver la información de un usuario"),
+        telebot.types.BotCommand("/triggers", "Gestión de los Triggers"),
+        telebot.types.BotCommand("/list_admins", "Listado de Administradores"),
         telebot.types.BotCommand("/ban", "Banear a un Usuario"),
         telebot.types.BotCommand("/unban", "Desbanear a un Usuario"),
         telebot.types.BotCommand("/warn", "Advertencia para un usuario"),
