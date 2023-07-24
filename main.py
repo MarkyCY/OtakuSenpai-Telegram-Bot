@@ -17,6 +17,8 @@ from telebot.types import InlineKeyboardButton
 import pickle
 from bson import ObjectId
 
+#Personal Trigger
+from func.personal_triggers import *
 #Blacklist
 from func.blacklist.blacklist import *
 #Other Command
@@ -562,22 +564,7 @@ def handle_message(message):
         if match_black:
             warn_user(message, "YES")
             bot.delete_message(message.chat.id, message.message_id)
-            if message.from_user.username == "MarkyWTF":
-                bot.send_message(message.chat.id, f"Padre! No digas malas palabras, Cerdo!")
-            elif message.from_user.username == "YosvelPG":
-                bot.send_message(message.chat.id, f"Tenía que ser el furro! Que puerco que sos, a no espera yo soy FURRA!! 😨")
-            elif message.from_user.username == "Dark_Fortress_Ultimate":
-                bot.send_message(message.chat.id, f"Luis, no digas malas palabras, que pensarían tus hijos... ")
-            elif message.from_user.username == "Makishima_kun":
-                bot.send_message(message.chat.id, f"Maki... Podrías por favor no decir malas palabras? Graciaaas!")
-            elif message.from_user.username == "MrLovro":
-                bot.send_message(message.chat.id, f"Lovro cochino! No digas malas palabras, y así quiere acercarse a mi hump!")
-            elif message.from_user.username == "Kynley2DO":
-                bot.send_message(message.chat.id, f"Ay no DRY tu no... No digas malas palabras de nuevo, si?")
-            elif message.from_user.username == "EnyaFernandez20":
-                bot.send_message(message.chat.id, f"Enya ni una más, o me encargo de destruir el estudio de Blue Lock! Waaaaaaaah!!!")
-            else: 
-                bot.send_message(message.chat.id, f"Mala palabra detectada, no vuelvas a hacerlo @{message.from_user.username}")
+            bot.send_message(message.chat.id, detected_blackword(message.from_user.username))
 
 
 # Define una lista para almacenar los datos de los usuarios que están en el flujo de conversación
