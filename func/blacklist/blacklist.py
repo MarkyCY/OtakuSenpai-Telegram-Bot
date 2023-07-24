@@ -36,11 +36,11 @@ def blacklist(message):
             blackword_list.append(doc) # Agregamos cada documento a la lista
 
         #bot.send_message(message.chat.id, texto, parse_mode="html")
-        mostrar_pagina_bl(blackword_list, message.chat.id, message.from_user.id)
+        mostrar_pagina_bl(blackword_list, message.chat.id, message.from_user.id, 0, None, message)
     else:
         bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
 
-def mostrar_pagina_bl(resul, cid, uid=None, pag=0, mid=None):
+def mostrar_pagina_bl(resul, cid, uid=None, pag=0, mid=None, message=None):
     #crear botonera
     markup = InlineKeyboardMarkup(row_width=5)
     b_prev = InlineKeyboardButton("⬅️", callback_data="prev_bl")
@@ -65,7 +65,7 @@ def mostrar_pagina_bl(resul, cid, uid=None, pag=0, mid=None):
     if mid:
         bot.edit_message_text(mensaje, cid, mid, reply_markup=markup, parse_mode="html")
     else:
-        res = bot.send_message(cid, mensaje, reply_markup=markup, parse_mode="html")
+        res = bot.reply_to(message, mensaje, reply_markup=markup, parse_mode="html")
         mid = res.message_id
 
         datos = {"pag":0, "lista":resul, "user_id": uid}

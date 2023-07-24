@@ -311,11 +311,11 @@ def command_triggers(message):
             trigger_list.append(doc) # Agregamos cada documento a la lista
 
         #bot.send_message(message.chat.id, texto, parse_mode="html")
-        mostrar_pagina(trigger_list, message.chat.id, message.from_user.id)
+        mostrar_pagina(trigger_list, message.chat.id, message.from_user.id, 0, None, message)
     else:
         bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
 
-def mostrar_pagina(resul, cid, uid=None, pag=0, mid=None):
+def mostrar_pagina(resul, cid, uid=None, pag=0, mid=None, message=None):
     #crear botonera
     markup = InlineKeyboardMarkup(row_width=5)
     b_prev = InlineKeyboardButton("⬅️", callback_data="prev")
@@ -338,7 +338,7 @@ def mostrar_pagina(resul, cid, uid=None, pag=0, mid=None):
     if mid:
         bot.edit_message_text(mensaje, cid, mid, reply_markup=markup, parse_mode="html")
     else:
-        res = bot.send_message(cid, mensaje, reply_markup=markup, parse_mode="html")
+        res = bot.reply_to(message, mensaje, reply_markup=markup, parse_mode="html")
         mid = res.message_id
 
         datos = {"pag":0, "lista":resul, "user_id": uid}
@@ -563,8 +563,8 @@ def handle_message(message):
             bot.reply_to(message, response)
         if match_black:
             warn_user(message, "YES")
+            bot.reply_to(message, detected_blackword(message.from_user.username))
             bot.delete_message(message.chat.id, message.message_id)
-            bot.send_message(message.chat.id, detected_blackword(message.from_user.username))
 
 
 # Define una lista para almacenar los datos de los usuarios que están en el flujo de conversación
