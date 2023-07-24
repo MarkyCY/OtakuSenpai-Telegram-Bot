@@ -17,6 +17,8 @@ from telebot.types import InlineKeyboardButton
 import pickle
 from bson import ObjectId
 
+#Blacklist
+from func.blacklist.blacklist import *
 #Other Command
 from func.bot_welcome import send_welcome
 from func.info import info
@@ -43,6 +45,7 @@ client = MongoClient('localhost', 27017)
 db = client.otakusenpai
 contest = db.contest
 Triggers = db.triggers
+Blacklist = db.blacklist
 
 #VARIABLES GLOBALES .ENV
 Token = os.getenv('BOT_API')
@@ -78,6 +81,10 @@ def respuesta_botones_inline(call):
     if call.data == "add":
         add_trigger(cid, uid, mid)
         return
+    
+    if call.data == "add_bw":
+        add_blackword(cid, uid, mid)
+        return
 
     if call.data == "back":
         pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
@@ -102,10 +109,52 @@ def respuesta_botones_inline(call):
             mostrar_pagina(datos["lista"], cid, uid, datos["pag"], mid)
         return
     
+    if call.data == "prev_bl":
+        if datos["pag"] == 0:
+            bot.answer_callback_query(call.id, "Ya estás en la primera página")
+        else:
+            datos["pag"]-= 1
+            pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+            mostrar_pagina_bl(datos['lista'], cid, uid, datos["pag"], mid)
+        return
+
+    if call.data == "next_bl":
+        if datos["pag"] * ROW_X_PAGE + ROW_X_PAGE >= len(datos["lista"]):
+            bot.answer_callback_query(call.id, "Ya estás en la ultima página")
+        else:
+            datos["pag"]+= 1
+            pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+            mostrar_pagina_bl(datos["lista"], cid, uid, datos["pag"], mid)
+        return
+    
     if ObjectId.is_valid(call.data):
         mostrar_triggers(call.data, cid, mid)
         return
     
+
+    def is_valid_blackword(variable):
+        pattern = r"^bw_[a-f\d]{24}$"
+        return bool(re.match(pattern, variable))
+    
+    if is_valid_blackword:
+        partes = call.data.split("_")
+        o_id = partes[1]
+        Blacklist.delete_one({"_id": ObjectId(o_id)})
+        resul = Blacklist.find()
+        blackword_list = []
+        for doc in resul:
+            blackword_list.append(doc)
+        page = 0
+        datos = {"pag":page, "lista":blackword_list, "user_id": uid}
+        os.remove(f'./data/{cid}_{mid}')
+        time.sleep(1)
+        pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+        mostrar_pagina_bl(blackword_list, cid, uid, page, mid)
+        msg = bot.send_message(cid, f"Palabra eliminada")
+        time.sleep(5)
+        bot.delete_message(cid, msg.message_id)
+        return
+
 
     def is_valid_edit(variable):
         pattern = r"^[a-f\d]{24}_\d$"
@@ -211,6 +260,36 @@ def command_list_admins(message):
 @bot.message_handler(commands=['report'])
 def command_report(message):
     report(message)
+
+
+@bot.message_handler(commands=['blacklist'])
+def command_blackwords(message):
+    blacklist(message)
+
+def add_blackword(cid, uid, msg_id):
+    msg = bot.send_message(uid, f"Escribe la nueva palabra:")
+    bot.register_next_step_handler(msg, catch_new_blackword, uid, msg_id, cid)
+
+def catch_new_blackword(msg, uid, msg_id, cid):
+    if msg.from_user.id == uid:
+        if msg.text is not None:
+            Blacklist.insert_one({ "blackword": msg.text })
+            resul = Blacklist.find()
+            blackword_list = []
+            for doc in resul:
+                blackword_list.append(doc)
+            page = 0
+            datos = {"pag":page, "lista":blackword_list, "user_id": uid}
+            os.remove(f'./data/{cid}_{msg_id}')
+            time.sleep(1)
+            pickle.dump(datos, open(f'./data/{cid}_{msg_id}', 'wb'))
+            mostrar_pagina_bl(blackword_list, cid, uid, page, msg_id)
+            msg = bot.send_message(msg.chat.id, f"Listo la palabra\n<code>{msg.text}</code>\nse añadió correctamente.", parse_mode="html")
+
+        else:
+            bot.send_message(msg.chat.id, f"Acción cancelada")
+            bot.clear_step_handler_by_chat_id(uid)
+
 
 #Triggers
 @bot.message_handler(commands=['triggers'])
@@ -400,6 +479,11 @@ def del_trigger(cid, mid, o_id, uid):
     bot.delete_message(cid, msg.message_id)
 #End Triggers
     
+
+
+
+
+
 @bot.message_handler(commands=['ban'])
 def start_ban_user(message):
     try:
@@ -458,16 +542,42 @@ def handle_message(message):
         triggers = {}
         for doc in Triggers.find():
             triggers[doc["triggers"].lower()] = doc["list_text"]
+
+        blackwords = []
+        for doc in Blacklist.find():
+            blackwords.append(doc["blackword"].lower())
+
         # Create a regular expression pattern from the triggers
         pattern = re.compile("|".join(triggers.keys()))
+        pattern_black = re.compile("|".join(blackwords))
         # Get the trigger from the message text
         match = pattern.search(message.text.lower())
+        match_black = pattern_black.search(message.text.lower())
         if match:
             trigger = match.group()
             # Get a random response for the trigger from the database
             response = random.choice(triggers[trigger])
             # Send the response to the group or supergroup
             bot.reply_to(message, response)
+        if match_black:
+            warn_user(message, "YES")
+            bot.delete_message(message.chat.id, message.message_id)
+            if message.from_user.username == "MarkyWTF":
+                bot.send_message(message.chat.id, f"Padre! No digas malas palabras, Cerdo!")
+            elif message.from_user.username == "YosvelPG":
+                bot.send_message(message.chat.id, f"Tenía que ser el furro! Que puerco que sos, a no espera yo soy FURRA!! 😨")
+            elif message.from_user.username == "Dark_Fortress_Ultimate":
+                bot.send_message(message.chat.id, f"Luis, no digas malas palabras, que pensarían tus hijos... ")
+            elif message.from_user.username == "Makishima_kun":
+                bot.send_message(message.chat.id, f"Maki... Podrías por favor no decir malas palabras? Graciaaas!")
+            elif message.from_user.username == "MrLovro":
+                bot.send_message(message.chat.id, f"Lovro cochino! No digas malas palabras, y así quiere acercarse a mi hump!")
+            elif message.from_user.username == "Kynley2DO":
+                bot.send_message(message.chat.id, f"Ay no DRY tu no... No digas malas palabras de nuevo, si?")
+            elif message.from_user.username == "EnyaFernandez20":
+                bot.send_message(message.chat.id, f"Enya ni una más, o me encargo de destruir el estudio de Blue Lock! Waaaaaaaah!!!")
+            else: 
+                bot.send_message(message.chat.id, f"Mala palabra detectada, no vuelvas a hacerlo @{message.from_user.username}")
 
 
 # Define una lista para almacenar los datos de los usuarios que están en el flujo de conversación

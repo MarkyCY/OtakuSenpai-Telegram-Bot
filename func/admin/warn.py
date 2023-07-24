@@ -52,15 +52,17 @@ def ban_user(chat_id, user_id):
     pass
 
 # Comando /warn
-def warn_user(message):
+def warn_user(message, to_ban=None):
     if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
         chat_id = message.chat.id
         user_id = message.from_user.id
         username = message.from_user.username
         chat_member = bot.get_chat_member(chat_id, user_id)
 
-        if chat_member.status in ['administrator', 'creator']:
-            if message.reply_to_message:
+        if chat_member.status in ['administrator', 'creator'] or to_ban:
+            if to_ban:
+                    print("Mala palabra detectada")
+            elif message.reply_to_message:
                 user_id = message.reply_to_message.from_user.id
             else:
                 if len(message.text.split()) > 1:
@@ -83,25 +85,29 @@ def warn_user(message):
                     return
 
             chat_member = bot.get_chat_member(chat_id, user_id)
+            
             if chat_member.status in ['administrator', 'creator']:
-                bot.send_message(chat_id, "Este comando no puede ser usado con administradores o el creador del grupo.")
-                return
+                if to_ban:
+                    return
+                else:
+                    bot.send_message(chat_id, "Este comando no puede ser usado con administradores o el creador del grupo.")
+                    return
 
             # Verificar si el usuario ya ha llegado al límite de advertencias
             warnings = get_warnings(str(user_id))
             if warnings >= 3:
                 bot.send_message(chat_id, f"El usuario {chat_member.user.username} ya ha llegado al límite de advertencias y ha sido baneado.")
-                ban_user(chat_id, user_id)
+                #ban_user(chat_id, user_id)
                 return
 
             # Incrementar el número de advertencias del usuario
-            add_warning(str(user_id))
+            #add_warning(str(user_id))
 
             # Si es la tercera advertencia, banear al usuario
             warnings = get_warnings(str(user_id))
             if warnings == 3:
                 bot.send_message(chat_id, f"Tercera advertencia para el usuario {chat_member.user.username}. El usuario será baneado.")
-                ban_user(chat_id, user_id)
+                #ban_user(chat_id, user_id)
             else:
                 bot.send_message(chat_id, f"Advertencia #{warnings} para el usuario {chat_member.user.username}.")
         else:
