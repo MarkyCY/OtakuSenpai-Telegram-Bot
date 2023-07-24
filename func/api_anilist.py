@@ -41,7 +41,14 @@ def search_anime(name):
     #}
 
     # Envía la solicitud a la API de AniList
-    response = requests.post(url, json={'query': query, 'variables': variables})
+    try:
+        response = requests.post(url, json={'query': query, 'variables': variables})
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as error:
+        print(f"Error al realizar la solicitud: {error}")
+    except requests.exceptions.RequestException as error:
+        print(f"Error de red: {error}")
     
     return response.json()
 
@@ -81,7 +88,14 @@ def search_manga(name):
     #}
 
     # Envía la solicitud a la API de AniList
-    response = requests.post(url, json={'query': query, 'variables': variables})
+    try:
+        response = requests.post(url, json={'query': query, 'variables': variables})
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as error:
+        print(f"Error al realizar la solicitud: {error}")
+    except requests.exceptions.RequestException as error:
+        print(f"Error de red: {error}")
     
     return response.json()
 

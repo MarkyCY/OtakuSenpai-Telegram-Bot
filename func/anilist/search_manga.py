@@ -19,7 +19,8 @@ bot = telebot.TeleBot(Token)
 
 def show_manga(message):
     cid = message.chat.id
-    if len(message.text.split('/manga ')) > 1:
+    if len(message.text.split(' ')) > 1:
+        print('Haciendo Solicitud a la api')
         referral_all = message.text.split(" ")
         manga_name = " ".join(referral_all[1:])
         manga = search_manga(manga_name)

@@ -19,7 +19,8 @@ bot = telebot.TeleBot(Token)
 
 def show_anime(message):
     cid = message.chat.id
-    if len(message.text.split('/anime ')) > 1:
+    if len(message.text.split(' ')) > 1:
+        print('Haciendo Solicitud a la api')
         referral_all = message.text.split(" ")
         anime_name = " ".join(referral_all[1:])
         anime = search_anime(anime_name)
