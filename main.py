@@ -658,6 +658,7 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/manga", "Buscar información sobre un manga"),
         telebot.types.BotCommand("/info", "Ver la información de un usuario"),
         telebot.types.BotCommand("/triggers", "Gestión de los Triggers"),
+        telebot.types.BotCommand("/blacklist", "Gestión de la lista negra"),
         telebot.types.BotCommand("/list_admins", "Listado de Administradores"),
         telebot.types.BotCommand("/ban", "Banear a un Usuario"),
         telebot.types.BotCommand("/unban", "Desbanear a un Usuario"),
