@@ -38,6 +38,10 @@ def subscribe_user(message):
     username = message.from_user.username
     found = False
 
+    if username is None:
+        bot.send_message(chat_id, f"Lo siento, no te puedes subscribir al concurso sin un nombre de usuario")
+        return
+    
     user = users.find_one({'user_id': user_id})
     if user:
         pass

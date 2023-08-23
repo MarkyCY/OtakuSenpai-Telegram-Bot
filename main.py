@@ -25,7 +25,7 @@ from func.blacklist.blacklist import *
 from func.bot_welcome import send_welcome
 from func.info import info
 from func.sticker_info import sticker_info
-from func.list_admins import list_admins
+from func.list_admins import list_admins, isAdmin
 from func.report import report
 #Admin Command
 from func.admin.warn import warn_user
@@ -48,6 +48,8 @@ db = client.otakusenpai
 contest = db.contest
 Triggers = db.triggers
 Blacklist = db.blacklist
+Admins = db.admins
+users = db.users
 
 #VARIABLES GLOBALES .ENV
 Token = os.getenv('BOT_API')
@@ -62,18 +64,26 @@ def respuesta_botones_inline(call):
     cid = call.message.chat.id
     mid = call.message.message_id
     uid = call.from_user.id
+    u_name = call.from_user.username
 
     chat_member = bot.get_chat_member(cid, uid)
+    isadmin = isAdmin(uid)
 
     if chat_member.status not in ['administrator', 'creator']:
-        bot.answer_callback_query(call.id, "Solo los administradores pueden usar este comando.")
-        return
+        if uid == 1221472021 or uid == 5579842331 or uid == 5174301596 or isadmin is not None:
+            pass
+        else:
+            bot.answer_callback_query(call.id, "Solo los administradores pueden usar este comando.")
+            return
 
     datos = pickle.load(open(f'./data/{cid}_{mid}', 'rb'))
 
-    if datos["user_id"] != uid:
-        bot.answer_callback_query(call.id, "Tu no pusiste este comando...")
-        return
+    if u_name == "MarkyWTF":
+        pass
+    else:
+        if datos["user_id"] != uid:
+            bot.answer_callback_query(call.id, "Tu no pusiste este comando...")
+            return
 
     if call.data == "close":
         bot.delete_message(cid, mid)
@@ -138,7 +148,7 @@ def respuesta_botones_inline(call):
         pattern = r"^bw_[a-f\d]{24}$"
         return bool(re.match(pattern, variable))
     
-    if is_valid_blackword:
+    if is_valid_blackword(call.data):
         partes = call.data.split("_")
         o_id = partes[1]
         Blacklist.delete_one({"_id": ObjectId(o_id)})
@@ -158,8 +168,11 @@ def respuesta_botones_inline(call):
         return
 
 
-    def is_valid_edit(variable):
+    def is_valid_to_edit(variable):
         pattern = r"^[a-f\d]{24}_\d$"
+        return bool(re.match(pattern, variable))
+    def is_valid_edit(variable):
+        pattern = r"^edit_[a-f\d]{24}$"
         return bool(re.match(pattern, variable))
     def is_valid_push_trigger(variable):
         pattern = r"^push_[a-f\d]{24}$"
@@ -173,8 +186,14 @@ def respuesta_botones_inline(call):
     def is_delete_trigger(variable):
         pattern = r"^del_[a-f\d]{24}$"
         return bool(re.match(pattern, variable))
-
-    if is_valid_edit(call.data):
+    def is_gput_trigger(variable):
+        pattern = r"^gput_[a-f\d]{24}$"
+        return bool(re.match(pattern, variable))
+    def is_gquit_trigger(variable):
+        pattern = r"^gquit_[a-f\d]{24}$"
+        return bool(re.match(pattern, variable))
+    
+    if is_valid_to_edit(call.data):
         partes = call.data.split("_")
         o_id = partes[0]
         sel = partes[1]
@@ -184,7 +203,7 @@ def respuesta_botones_inline(call):
         pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
         mostrar_pagina(datos["lista"], cid, uid, datos["pag"], mid)
         return
-    
+
     if is_delete_trigger(call.data):
         partes = call.data.split("_")
         o_id = partes[1]
@@ -197,7 +216,13 @@ def respuesta_botones_inline(call):
         sel = partes[2]
         os.remove(f'./data/{cid}_{mid}')
         bot.delete_message(cid, mid)
-        edit_trigger(uid, uid, o_id, sel)
+        edit_trigger_text(uid, uid, o_id, sel)
+        return
+    
+    if is_valid_edit(call.data):
+        partes = call.data.split("_")
+        o_id = partes[1]
+        edit_trigger(uid, uid, o_id, datos["pag"], mid)
         return
     
     if is_valid_push_trigger(call.data):
@@ -213,6 +238,26 @@ def respuesta_botones_inline(call):
         o_id = partes[1]
         sel = partes[2]
         del_trigger_text(cid, mid, o_id, sel)
+
+    if is_gput_trigger(call.data):
+        print("haciendo global")
+        partes = call.data.split("_")
+        o_id = partes[1]
+        Triggers.update_one({'_id': ObjectId(o_id)}, {"$set": {"eq": True}})
+        resul = Triggers.find()
+        trigger_list = [] # Declaramos una lista vacía para almacenar los triggers
+        for doc in resul:
+            trigger_list.append(doc) # Agregamos cada documento a la lista
+        mostrar_pagina(trigger_list, cid, uid, datos["pag"], mid)
+        
+    if is_gquit_trigger(call.data):
+        print("quitando global")
+        partes = call.data.split("_")
+        o_id = partes[1]
+        Triggers.update_one({'_id': ObjectId(o_id)}, {"$set": {"eq": False}})
+        
+        mostrar_pagina(trigger_list, cid, uid, datos["pag"], mid)
+
 
 
 @bot.message_handler(commands=['sticker_info'])
@@ -296,14 +341,19 @@ def catch_new_blackword(msg, uid, msg_id, cid):
 #Triggers
 @bot.message_handler(commands=['triggers'])
 def command_triggers(message):
-    if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
-        user_id = message.from_user.id
-        chat_id = message.chat.id
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    isadmin = isAdmin(user_id)
+    if user_id == 1221472021 or user_id == 5579842331 or user_id == 5174301596:
+        isadmin = "Yes"
+    if (message.chat.type == 'supergroup' or message.chat.type == 'group' or isadmin is not None):
         chat_member = bot.get_chat_member(chat_id, user_id)
-
         if chat_member.status not in ['administrator', 'creator']:
-            bot.reply_to(message, "Solo los administradores pueden usar este comando.")
-            return
+            if isadmin is not None:
+                pass
+            else:
+                bot.reply_to(message, "Solo los administradores pueden usar este comando.")
+                return
 
         resul = Triggers.find()
         trigger_list = [] # Declaramos una lista vacía para almacenar los triggers
@@ -330,7 +380,10 @@ def mostrar_pagina(resul, cid, uid=None, pag=0, mid=None, message=None):
     botones = []
     for trigger in resul[inicio:fin]:
         botones.append(InlineKeyboardButton(str(n), callback_data=str(trigger['_id'])))
-        mensaje+= f"[<b>{n}</b>] {trigger['triggers']}\n"
+        if trigger['eq'] is False:
+            mensaje+= f"[<b>{n}</b>] {trigger['triggers']}\n"
+        else:
+            mensaje+= f"[<b>{n}</b>] {trigger['triggers']} [🌐]\n"
         n+= 1
     markup.row(b_add)
     markup.add(*botones)
@@ -338,7 +391,9 @@ def mostrar_pagina(resul, cid, uid=None, pag=0, mid=None, message=None):
     if mid:
         bot.edit_message_text(mensaje, cid, mid, reply_markup=markup, parse_mode="html")
     else:
-        res = bot.reply_to(message, mensaje, reply_markup=markup, parse_mode="html")
+        if cid != uid:
+            bot.reply_to(message, "Te escribí por Pv.")
+        res = bot.send_message(uid, mensaje, reply_markup=markup, parse_mode="html")
         mid = res.message_id
 
         datos = {"pag":0, "lista":resul, "user_id": uid}
@@ -349,12 +404,17 @@ def mostrar_triggers(id_trig, cid, mid):
     markup = InlineKeyboardMarkup(row_width=5)
     documento = Triggers.find_one({"_id": ObjectId(id_trig)})
     b_add = InlineKeyboardButton("➕ Agregar Texto", callback_data=f"push_{documento['_id']}")
+    b_edit = InlineKeyboardButton("✍️ Editar Trigger", callback_data=f"edit_{documento['_id']}")
+    if documento['eq'] is False:
+        glbl = InlineKeyboardButton("✅ Hacer Global", callback_data=f"gput_{documento['_id']}")
+    else:
+        glbl = InlineKeyboardButton("❎ Quitar Global", callback_data=f"gquit_{documento['_id']}")
     b_del = InlineKeyboardButton("⚠️ Eliminar Trigger", callback_data=f"del_{documento['_id']}")
     b_back = InlineKeyboardButton("🔙", callback_data="back")
     b_close = InlineKeyboardButton("❌", callback_data="close")
 
 
-    mensaje = f"<i>Triggers:</i>\n\n"
+    mensaje = f"<i>{documento['triggers']:}:</i>\n\n"
     n = 1
     botones = []
     for valor in documento['list_text']:
@@ -365,10 +425,31 @@ def mostrar_triggers(id_trig, cid, mid):
     n=n-1
     markup.add(*botones)
     if n < 10:
-        markup.row(b_add, b_del)
+        markup.row(b_add, glbl)
+        markup.row(b_edit, b_del)
     markup.row(b_back, b_close)
     bot.edit_message_text(mensaje, cid, mid, reply_markup=markup, parse_mode="html")
 
+def edit_trigger(cid, uid, o_id, pag, mid):
+    doc = Triggers.find_one({"_id": ObjectId(o_id)})
+    msg = bot.send_message(cid, f"Escribe el reemplazo de <code>{doc['triggers']}</code>:", parse_mode="html")
+    bot.register_next_step_handler(msg, catch_trigger, uid, o_id, pag, mid)
+
+def catch_trigger(msg, uid, o_id, pag, mid):
+    if msg.from_user.id == uid:
+        if msg.text is not None:
+            Triggers.update_one(
+               { "_id" : ObjectId(o_id) },
+               { "$set": { "triggers": msg.text } }
+            )
+            resul = Triggers.find()
+            trigger_list = [] # Declaramos una lista vacía para almacenar los triggers
+            for doc in resul:
+                trigger_list.append(doc) # Agregamos cada documento a la lista
+            mostrar_pagina(trigger_list, msg.chat.id, uid, pag, mid)
+            bot.send_message(msg.chat.id, f"Trigger editado correctamente")
+        else:
+            bot.send_message(msg.chat.id, f"Trigger no editado")
 
 def menu_trigger(cid, uid, o_id, sel):
     markup = InlineKeyboardMarkup(row_width=5)
@@ -384,7 +465,7 @@ def menu_trigger(cid, uid, o_id, sel):
     pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
     #bot.register_next_step_handler(msg, catch_trigger_text, uid, o_id, sel)
 
-def edit_trigger(cid, uid, o_id, sel):
+def edit_trigger_text(cid, uid, o_id, sel):
     doc = Triggers.find_one({"_id": ObjectId(o_id)})
     msg = bot.send_message(cid, f"Escribe el reemplazo de <code>{doc['list_text'][int(sel)]}</code>:", parse_mode="html")
     bot.register_next_step_handler(msg, catch_trigger_text, uid, o_id, sel)
@@ -405,7 +486,9 @@ def del_trigger_text(cid, mid, o_id, sel):
     Triggers.update_one({"_id": ObjectId(o_id)}, {"$pull": {"list_text": None}})
     os.remove(f'./data/{cid}_{mid}')
     bot.delete_message(cid, mid)
-    bot.send_message(cid, f"Texto eliminado")
+    msg = bot.send_message(cid, f"Texto eliminado")
+    time.sleep(5)
+    bot.delete_message(cid, msg.message_id)
 
 
 def add_trigger_text(cid, uid, o_id):
@@ -447,7 +530,7 @@ def catch_new_trigger(msg, uid, msg_id, cid):
 def catch_new_text_trigger(msg, uid, trigger, msg_id, cid):
     if msg.from_user.id == uid:
         if msg.text is not None:
-            Triggers.insert_one({ "triggers" : trigger, "list_text": [f"{msg.text}"] })
+            Triggers.insert_one({ "triggers" : trigger, "list_text": [f"{msg.text}"], "eq": False })
             resul = Triggers.find()
             trigger_list = []
             for doc in resul:
@@ -540,31 +623,56 @@ def command_unmute_user(message):
 def handle_message(message):
     # Check if the message is from a group or a supergroup
     if message.chat.type in ['group', 'supergroup']:
-        # Get all the triggers and their corresponding responses from the database
-        triggers = {}
-        for doc in Triggers.find():
-            triggers[doc["triggers"].lower()] = doc["list_text"]
-
         blackwords = []
         for doc in Blacklist.find():
             blackwords.append(doc["blackword"].lower())
 
-        # Create a regular expression pattern from the triggers
-        pattern = re.compile("|".join(triggers.keys()))
         pattern_black = re.compile("|".join(blackwords))
-        # Get the trigger from the message text
-        match = pattern.search(message.text.lower())
+
         match_black = pattern_black.search(message.text.lower())
-        if match:
-            trigger = match.group()
-            # Get a random response for the trigger from the database
-            response = random.choice(triggers[trigger])
-            # Send the response to the group or supergroup
-            bot.reply_to(message, response)
+
         if match_black:
             warn_user(message, "YES")
             bot.reply_to(message, detected_blackword(message.from_user.username))
             bot.delete_message(message.chat.id, message.message_id)
+            return
+
+        triggers = {}
+        triggers_equal = {}
+        for doc in Triggers.find():
+            if "eq" in doc:
+                if doc["eq"] is False:
+                    triggers_equal[doc["triggers"].lower()] = doc["list_text"]
+                if doc["eq"] is True:
+                    triggers[doc["triggers"].lower()] = doc["list_text"]
+
+        match = False
+        trigger_text = triggers_equal.get(message.text.lower(), None)
+        if len(triggers) != 0:
+            pattern_trigger = re.compile("|".join(triggers))
+            pattern_match = pattern_trigger.search(message.text.lower())
+        else:
+            pattern_match = None
+
+        if pattern_match:
+            trigger = pattern_match.group()
+            response = random.choice(triggers[trigger])
+            bot.reply_to(message, response)
+
+        if trigger_text:
+            match = True
+        if match:
+            response = random.choice(trigger_text)
+            bot.reply_to(message, response)
+            
+        
+        #if match:
+        #    trigger = match.group()
+        #    # Get a random response for the trigger from the database
+        #    response = random.choice(triggers[trigger])
+        #    # Send the response to the group or supergroup
+        #    bot.reply_to(message, response)
+        
 
 
 # Define una lista para almacenar los datos de los usuarios que están en el flujo de conversación
@@ -626,14 +734,33 @@ def clear_flow_by_user_id(user_id):
     bot.clear_step_handler_by_chat_id(user_id)
     clear_timer_by_user_id(user_id)
 
-# Obtener la lista de usuarios desde la base de datos o desde otro lugar
+
+def scheduled_task_1():
+    user_lst = []
+    for user in contest.find({'contest_num': 1}):
+                for sub in user['subscription']:
+                    username = users.find_one({"user_id" : sub['user']})
+                    chat_member = bot.get_chat_member(-1001485529816, username['user_id'])
+                    user_lst.append(f'<a href="tg://user?id={chat_member.user.id}">{chat_member.user.first_name}</a>')
+
+    mensaje = f"Atención:\n"
+    for username in user_lst:
+        mensaje+= f"🀄️ {username}\n"
+    mensaje+= f"\n⚠️El Concurso será el <code>Miercoles</code>.\n"
+
+    markup = telebot.types.InlineKeyboardMarkup()
+    btn = telebot.types.InlineKeyboardButton(text='🗳️ Subscribirse al Concurso',url="https://telegram.me/Akira_Senpai_bot?start=sub")
+    markup.add(btn)
+
+    bot.send_message(-1001485529816, mensaje, parse_mode="html", reply_markup=markup)
 
 # Crea una instancia de BackgroundScheduler
 scheduler = BackgroundScheduler()
 # Obtiene una instancia de pytz para la zona horaria deseada
 tz = pytz.timezone('Cuba')
 # Programa la tarea para que se ejecute cada hora CronTrigger(hour=22, minute=34, timezone=tz)
-scheduler.add_job(scheduled_task, CronTrigger(hour=21, minute=44, timezone=tz))
+scheduler.add_job(scheduled_task, CronTrigger(hour=17, minute=50, timezone=tz))
+scheduler.add_job(scheduled_task_1, CronTrigger(hour=19, minute=14, timezone=tz))
 
 # Inicia el scheduler
 scheduler.start()

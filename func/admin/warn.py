@@ -97,17 +97,17 @@ def warn_user(message, to_ban=None):
             warnings = get_warnings(str(user_id))
             if warnings >= 3:
                 bot.send_message(chat_id, f"El usuario {chat_member.user.username} ya ha llegado al límite de advertencias y ha sido baneado.")
-                #ban_user(chat_id, user_id)
+                ban_user(chat_id, user_id)
                 return
 
             # Incrementar el número de advertencias del usuario
-            #add_warning(str(user_id))
+            add_warning(str(user_id))
 
             # Si es la tercera advertencia, banear al usuario
             warnings = get_warnings(str(user_id))
             if warnings == 3:
                 bot.send_message(chat_id, f"Tercera advertencia para el usuario {chat_member.user.username}. El usuario será baneado.")
-                #ban_user(chat_id, user_id)
+                ban_user(chat_id, user_id)
             else:
                 bot.send_message(chat_id, f"Advertencia #{warnings} para el usuario {chat_member.user.username}.")
         else:
