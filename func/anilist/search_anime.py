@@ -50,12 +50,12 @@ def show_anime(message):
 
             html_regex = re.compile(r'<[^>]+>')
             description = re.sub(html_regex, '', anime['data']['Media']['description'])[:500]
-            image = anime['data']['Media']['coverImage']['large']
-            res = requests.get(image)
-            print(res.status_code, cid)
-            with open("./file/" + name + ".jpg", 'wb') as out:
-                out.write(res.content)
-            foto = open("./file/" + name + ".jpg", "rb")
+            #image = anime['data']['Media']['coverImage']['large']
+            #res = requests.get(image)
+            #print(res.status_code, cid)
+            #with open("./file/" + name + ".jpg", 'wb') as out:
+            #    out.write(res.content)
+            #foto = open("./file/" + name + ".jpg", "rb")
 
             msg = f"""
 <strong>{name}</strong> 
@@ -68,6 +68,6 @@ def show_anime(message):
 <strong>Estado:</strong> {status}
 <strong>Para Adultos?:</strong> {adult}
 """
-            bot.send_photo(cid, foto, msg, parse_mode="html")
+            bot.send_message(cid, msg, parse_mode="html")
     else:
         bot.send_message(message.chat.id, f"Debes poner el nombre del anime luego de /anime")
