@@ -1,9 +1,11 @@
 from pymongo import MongoClient
 import telebot
 import os
+import pickle
+
 from telebot.types import InlineKeyboardMarkup
 from telebot.types import InlineKeyboardButton
-import pickle
+from func.list_admins import isAdmin
 from bson import ObjectId
 
 from dotenv import load_dotenv
@@ -21,24 +23,28 @@ ROW_X_PAGE = int(os.getenv('ROW_X_PAGE'))
 bot = telebot.TeleBot(Token)
 
 def blacklist(message):
-    if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
-        user_id = message.from_user.id
-        chat_id = message.chat.id
-        chat_member = bot.get_chat_member(chat_id, user_id)
+    user_id = message.from_user.id
+    chat_id = message.chat.id
 
-        if chat_member.status not in ['administrator', 'creator']:
+    isadmin = isAdmin(user_id)
+    #if user_id == 1221472021 or user_id == 5579842331 or user_id == 5174301596:
+    #    isadmin = "Yes"
+    chat_member = bot.get_chat_member(chat_id, user_id)
+
+    if chat_member.status not in ['administrator', 'creator']:
+        if isadmin is not None:
+            pass
+        else:
             bot.reply_to(message, "Solo los administradores pueden usar este comando.")
             return
 
-        resul = Blacklist.find()
-        blackword_list = [] 
-        for doc in resul:
-            blackword_list.append(doc) # Agregamos cada documento a la lista
+    resul = Blacklist.find()
+    blackword_list = [] 
+    for doc in resul:
+        blackword_list.append(doc) # Agregamos cada documento a la lista
 
-        #bot.send_message(message.chat.id, texto, parse_mode="html")
-        mostrar_pagina_bl(blackword_list, message.chat.id, message.from_user.id, 0, None, message)
-    else:
-        bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
+    #bot.send_message(message.chat.id, texto, parse_mode="html")
+    mostrar_pagina_bl(blackword_list, message.chat.id, message.from_user.id, 0, None, message)
 
 def mostrar_pagina_bl(resul, cid, uid=None, pag=0, mid=None, message=None):
     #crear botonera
@@ -65,8 +71,10 @@ def mostrar_pagina_bl(resul, cid, uid=None, pag=0, mid=None, message=None):
     if mid:
         bot.edit_message_text(mensaje, cid, mid, reply_markup=markup, parse_mode="html")
     else:
-        res = bot.reply_to(message, mensaje, reply_markup=markup, parse_mode="html")
-        mid = res.message_id
+        res = bot.send_message(uid, mensaje, reply_markup=markup, parse_mode="html")
+        if cid != uid:
+            bot.reply_to(message, "Te escribí por Pv.")
 
+        mid = res.message_id
         datos = {"pag":0, "lista":resul, "user_id": uid}
-        pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+        pickle.dump(datos, open(f'./data/{uid}_{mid}', 'wb'))
