@@ -72,6 +72,9 @@ def respuesta_botones_inline(call):
     if chat_member.status not in ['administrator', 'creator']:
         if uid == 1221472021 or uid == 5579842331 or uid == 5174301596 or isadmin is not None:
             pass
+        elif uid == 5825765407:
+            bot.answer_callback_query(call.id, "MrLovro mi padre no te autoriza a usar triggers. JAJA XD efe por ti")
+            return
         else:
             bot.answer_callback_query(call.id, "Solo los administradores pueden usar este comando.")
             return
@@ -397,7 +400,7 @@ def mostrar_pagina(resul, cid, uid=None, pag=0, mid=None, message=None):
         mid = res.message_id
 
         datos = {"pag":0, "lista":resul, "user_id": uid}
-        pickle.dump(datos, open(f'./data/{cid}_{mid}', 'wb'))
+        pickle.dump(datos, open(f'./data/{uid}_{mid}', 'wb'))
 
 def mostrar_triggers(id_trig, cid, mid):
     #crear botonera
