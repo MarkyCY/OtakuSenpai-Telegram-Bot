@@ -1,5 +1,6 @@
 import os
 import re
+import string
 import random
 import telebot
 from pymongo import MongoClient
@@ -50,6 +51,7 @@ Triggers = db.triggers
 Blacklist = db.blacklist
 Admins = db.admins
 users = db.users
+Gartic = db.gartic
 
 #VARIABLES GLOBALES .ENV
 Token = os.getenv('BOT_API')
@@ -66,6 +68,26 @@ def respuesta_botones_inline(call):
     uid = call.from_user.id
     u_name = call.from_user.username
 
+
+        #Game Paint
+    def is_valid_to_join(variable):
+        pattern = r"join_[a-zA-Z\d]{5}$"
+        return bool(re.match(pattern, variable))
+
+    if is_valid_to_join(call.data):
+        gartic_counter = Gartic.count_documents({})
+        if gartic_counter > 15:
+            bot.answer_callback_query(call.id, f"Ya dejen el abuso, es más, no hay mas pruebas hastas que despierte mi papá!")
+            return
+        partes = call.data.split("_")
+        code = partes[1]
+        bot.answer_callback_query(call.id, f"El codigo eh: {code}")
+        bot.send_message(call.from_user.id, f"Supuestamente te has unido a la sala: {code}")
+        bot.send_message(call.message.chat.id, f'El usuario <a href="tg://user?id={call.from_user.id}">{call.from_user.first_name}</a> se ha unido a la sala...', parse_mode="html", message_thread_id=call.message.message_thread_id)
+        Gartic.insert_one({ "prueba": "prueba" })
+        return
+    
+
     chat_member = bot.get_chat_member(cid, uid)
     isadmin = isAdmin(uid)
 
@@ -81,12 +103,12 @@ def respuesta_botones_inline(call):
 
     datos = pickle.load(open(f'./data/{cid}_{mid}', 'rb'))
 
-    if u_name == "MarkyWTF":
-        pass
-    else:
-        if datos["user_id"] != uid:
-            bot.answer_callback_query(call.id, "Tu no pusiste este comando...")
-            return
+    #if u_name == "MarkyWTF":
+    #    pass
+    #else:
+    #    if datos["user_id"] != uid:
+    #        bot.answer_callback_query(call.id, "Tu no pusiste este comando...")
+    #        return
 
     if call.data == "close":
         bot.delete_message(cid, mid)
@@ -258,7 +280,10 @@ def respuesta_botones_inline(call):
         partes = call.data.split("_")
         o_id = partes[1]
         Triggers.update_one({'_id': ObjectId(o_id)}, {"$set": {"eq": False}})
-        
+        resul = Triggers.find()
+        trigger_list = [] # Declaramos una lista vacía para almacenar los triggers
+        for doc in resul:
+            trigger_list.append(doc) # Agregamos cada documento a la lista
         mostrar_pagina(trigger_list, cid, uid, datos["pag"], mid)
 
 
@@ -621,6 +646,59 @@ def command_unmute_user(message):
         bot.send_message(message.from_user.id, f"Hola, mira esta es la razón por la que no se pudo ejecutar bien el comando: {err.description}")
         bot.reply_to(message, f"No se pudo ejecutar esta acción.")
 
+
+@bot.message_handler(commands=['start_play'])
+def gartic(message):
+    
+    caracteres_permitidos = string.ascii_uppercase + string.digits
+    codigo = ''.join(random.choice(caracteres_permitidos) for _ in range(5))
+    topic_id = message.message_thread_id
+    bot.reply_to(message, f"Va a empezar el juego toca el botón para unirte.")
+    markup = InlineKeyboardMarkup()
+    join = InlineKeyboardButton("🎨Unirse", callback_data=f"join_{codigo}")
+    markup.row(join)
+
+    bot.send_message(message.chat.id, f"Mira un código, que bonito! <code>/join {codigo}</code>\nYa hay un botón wiiiiii!", parse_mode="html", reply_markup=markup, message_thread_id=topic_id)
+
+    #bot.register_next_step_handler(message, cacioc)
+
+@bot.message_handler(commands=['join'])
+def gartic_join(message):
+    referral_all = message.text.split(" ")
+    code = str(referral_all[1])
+    print(code)
+
+def cacioc(message):
+    frases = {
+        'MarkyWTF': '1',
+        'Nivita3': '2'
+    }
+
+    jugadores = list(frases.keys())
+
+    frases_asignadas = {}
+    foto = open("./file/_blank.jpg", "rb")
+    print(foto)
+    
+    while jugadores:
+        jugador = jugadores.pop()
+        frases_disponibles = [frase for clave, frase in frases.items() if clave != jugador and frase not in frases_asignadas.values()]
+        frase_asignada = random.choice(frases_disponibles)
+        frases_asignadas[jugador] = frase_asignada
+        user = users.find_one({"username": jugador})
+        chat_id_origen = 873919300
+
+        # ID del mensaje a reenviar
+        mensaje_id = 1712
+
+        # Reenviar el mensaje
+        bot.forward_message(user["user_id"], chat_id_origen, mensaje_id)
+        #bot.send_photo(user["user_id"], foto, "edita esto pa ver si silve")
+
+    print(frases_asignadas)
+
+#LAMBDA
+
 #Base de datos de prueba
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
@@ -676,6 +754,12 @@ def handle_message(message):
         #    # Send the response to the group or supergroup
         #    bot.reply_to(message, response)
         
+
+
+
+
+
+#CONCURSO
 
 
 # Define una lista para almacenar los datos de los usuarios que están en el flujo de conversación
