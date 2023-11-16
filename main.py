@@ -4,6 +4,11 @@ import string
 import random
 import telebot
 import datetime
+
+from flask import Flask, request
+from pyngrok import ngrok, conf
+from waitress import serve
+
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from telebot.apihelper import ApiTelegramException
@@ -43,6 +48,15 @@ from func.concurso.sub_user import subscribe_user
 #Evento
 from func.event import calvicia
 load_dotenv()
+
+web_server = Flask(__name__)
+
+@web_server.route('/', methods=['POST'])
+def webhook():
+    if request.headers.get("content-type") == "application/json":
+        update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
+        bot.process_new_updates([update])
+        return "OK", 200
 
 # Obtiene una instancia de pytz para la zona horaria deseada
 tz = pytz.timezone('Cuba')
@@ -887,6 +901,8 @@ scheduler.add_job(scheduled_task_1, CronTrigger(hour=23, minute=58, timezone=tz)
 scheduler.start()
 
 if __name__ == '__main__':
+    ngrok_token = os.getenv('NGROK_TOKEN')
+    
     bot.set_my_commands([
         telebot.types.BotCommand("/start", "..."),
         telebot.types.BotCommand("/anime", "Buscar información sobre un anime"),
@@ -902,5 +918,18 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/unmute", "Desmutear a un Usuario"),
         telebot.types.BotCommand("/sub", "Subscribirse al concurso")
     ])
-    print('Iniciando el Bot')
-    bot.infinity_polling()
+    #bot.remove_webhook()
+    #time.sleep(1)
+    #print('Iniciando el Bot')
+    #bot.infinity_polling()
+    conf.get_default().config_path = "./config_ngrok.yml"
+    conf.get_default().region = "us"
+    ngrok.set_auth_token(ngrok_token)
+    ngrok_tunel = ngrok.connect(5000, bind_tls=True)
+    ngrok_url = ngrok_tunel.public_url
+    print("URL NGROK: ", ngrok_url)
+    bot.remove_webhook()
+    time.sleep(1)
+    bot.set_webhook(url=ngrok_url)
+    #web_server.run(host="0.0.0.0", port=5000)
+    serve(web_server, host="0.0.0.0", port=5000)
