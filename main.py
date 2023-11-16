@@ -3,6 +3,7 @@ import re
 import string
 import random
 import telebot
+import datetime
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from telebot.apihelper import ApiTelegramException
@@ -39,9 +40,12 @@ from func.anilist.search_manga import show_manga
 from func.anilist.search_anime import show_anime
 #Concurso
 from func.concurso.sub_user import subscribe_user
+#Evento
+from func.event import calvicia
 load_dotenv()
 
-
+# Obtiene una instancia de pytz para la zona horaria deseada
+tz = pytz.timezone('Cuba')
 
 #Conectarse a la base de datos MongoDB
 client = MongoClient('localhost', 27017)
@@ -593,8 +597,29 @@ def del_trigger(cid, mid, o_id, uid):
 #End Triggers
     
 
+@bot.message_handler(commands=['day'])
+def handle_day_message(message):
+    
+    chat_id = message.chat.id
+    parts = message.text.split()
+    num = int(parts[1])
 
+    now = datetime.datetime.now()
 
+    # Añadir el número de minutos especificado
+    new_time = now + datetime.timedelta(seconds=num)
+    
+    # Extraer la hora y los minutos de la nueva fecha y hora
+    #hour = new_time.hour
+    #minute = new_time.minute
+    seconds = new_time.second
+    bot.send_message(chat_id, f"Dentro de: {num} seg, te notifico. ")
+    try:
+        #scheduler.add_job(calvicia, CronTrigger(hour=hour, minute=minute, second=seconds, timezone=tz), args=(-1001664356911, num))
+        timer = threading.Timer(num, calvicia, args=[chat_id, num])
+        timer.start()
+    except ApiTelegramException as err:
+        print(err)
 
 
 @bot.message_handler(commands=['ban'])
@@ -647,62 +672,61 @@ def command_unmute_user(message):
         bot.reply_to(message, f"No se pudo ejecutar esta acción.")
 
 
-@bot.message_handler(commands=['start_play'])
-def gartic(message):
-    
-    caracteres_permitidos = string.ascii_uppercase + string.digits
-    codigo = ''.join(random.choice(caracteres_permitidos) for _ in range(5))
-    topic_id = message.message_thread_id
-    bot.reply_to(message, f"Va a empezar el juego toca el botón para unirte.")
-    markup = InlineKeyboardMarkup()
-    join = InlineKeyboardButton("🎨Unirse", callback_data=f"join_{codigo}")
-    markup.row(join)
-
-    bot.send_message(message.chat.id, f"Mira un código, que bonito! <code>/join {codigo}</code>\nYa hay un botón wiiiiii!", parse_mode="html", reply_markup=markup, message_thread_id=topic_id)
-
-    #bot.register_next_step_handler(message, cacioc)
-
-@bot.message_handler(commands=['join'])
-def gartic_join(message):
-    referral_all = message.text.split(" ")
-    code = str(referral_all[1])
-    print(code)
-
-def cacioc(message):
-    frases = {
-        'MarkyWTF': '1',
-        'Nivita3': '2'
-    }
-
-    jugadores = list(frases.keys())
-
-    frases_asignadas = {}
-    foto = open("./file/_blank.jpg", "rb")
-    print(foto)
-    
-    while jugadores:
-        jugador = jugadores.pop()
-        frases_disponibles = [frase for clave, frase in frases.items() if clave != jugador and frase not in frases_asignadas.values()]
-        frase_asignada = random.choice(frases_disponibles)
-        frases_asignadas[jugador] = frase_asignada
-        user = users.find_one({"username": jugador})
-        chat_id_origen = 873919300
-
-        # ID del mensaje a reenviar
-        mensaje_id = 1712
-
-        # Reenviar el mensaje
-        bot.forward_message(user["user_id"], chat_id_origen, mensaje_id)
-        #bot.send_photo(user["user_id"], foto, "edita esto pa ver si silve")
-
-    print(frases_asignadas)
+#@bot.message_handler(commands=['start_play'])
+#def gartic(message):
+#    
+#    caracteres_permitidos = string.ascii_uppercase + string.digits
+#    codigo = ''.join(random.choice(caracteres_permitidos) for _ in range(5))
+#    topic_id = message.message_thread_id
+#    bot.reply_to(message, f"Va a empezar el juego toca el botón para unirte.")
+#    markup = InlineKeyboardMarkup()
+#    join = InlineKeyboardButton("🎨Unirse", callback_data=f"join_{codigo}")
+#    markup.row(join)
+#
+#    bot.send_message(message.chat.id, f"Mira un código, que bonito! <code>/join {codigo}</code>\nYa hay un botón wiiiiii!", parse_mode="html", reply_markup=markup, message_thread_id=topic_id)
+#
+#    #bot.register_next_step_handler(message, cacioc)
+#
+#@bot.message_handler(commands=['join'])
+#def gartic_join(message):
+#    referral_all = message.text.split(" ")
+#    code = str(referral_all[1])
+#    print(code)
+#
+#def cacioc(message):
+#    frases = {
+#        'MarkyWTF': '1',
+#        'Nivita3': '2'
+#    }
+#
+#    jugadores = list(frases.keys())
+#
+#    frases_asignadas = {}
+#    foto = open("./file/_blank.jpg", "rb")
+#    print(foto)
+#    
+#    while jugadores:
+#        jugador = jugadores.pop()
+#        frases_disponibles = [frase for clave, frase in frases.items() if clave != jugador and frase not in frases_asignadas.values()]
+#        frase_asignada = random.choice(frases_disponibles)
+#        frases_asignadas[jugador] = frase_asignada
+#        user = users.find_one({"username": jugador})
+#        chat_id_origen = 873919300
+#
+#        # ID del mensaje a reenviar
+#        mensaje_id = 1712
+#
+#        # Reenviar el mensaje
+#        bot.forward_message(user["user_id"], chat_id_origen, mensaje_id)
+#        #bot.send_photo(user["user_id"], foto, "edita esto pa ver si silve")
+#
+#    print(frases_asignadas)
 
 #LAMBDA
 
-#Base de datos de prueba
+#Triggers
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
-    # Check if the message is from a group or a supergroup
     if message.chat.type in ['group', 'supergroup']:
         blackwords = []
         for doc in Blacklist.find():
@@ -772,12 +796,18 @@ def scheduled_task():
                     user_lst.append(sub['user'])
 
     for user_id in user_lst:
-        bot.send_message(user_id, "Bien tienes 1 minuto para hallar la palabra magica y poderosa que @MarkyWTF ha seleccionado si lo conoces puede que la encuentres")
+        try:
+            bot.send_message(user_id, "Bien tienes 1 minuto para hallar la palabra magica y poderosa que @MarkyWTF ha seleccionado si lo conoces puede que la encuentres")
+        except ApiTelegramException as err:
+            print(err)
 
     time.sleep(10)
 
     for user_id in user_lst:
-        msg = bot.send_message(user_id, "Listo, escribe la palabra mágica:")
+        try:
+            msg = bot.send_message(user_id, "Listo, escribe la palabra mágica:")
+        except ApiTelegramException as err:
+            print(err)
         # Registrar la siguiente función para manejar la respuesta
         timer = threading.Timer(60.0, timeout_handler, args=[user_id])
         timer.start()
@@ -799,7 +829,10 @@ def prueba(message):
             clear_flow_by_user_id(message.chat.id)
             for user in contest.find({'contest_num': 1}):
                 for sub in user['subscription']:
-                    bot.send_message(sub['user'], f'Eeeey @{message.from_user.username} ha respondido bieeeen!')
+                    try:
+                        bot.send_message(sub['user'], f'Eeeey @{message.from_user.username} ha respondido bieeeen!')
+                    except ApiTelegramException as err:
+                        print(err)
     else:
         bot.send_message(message.from_user.id, "Necesito Texto Textoooooo!!!")
 
@@ -827,7 +860,10 @@ def scheduled_task_1():
     for user in contest.find({'contest_num': 1}):
                 for sub in user['subscription']:
                     username = users.find_one({"user_id" : sub['user']})
-                    chat_member = bot.get_chat_member(-1001485529816, username['user_id'])
+                    try:
+                        chat_member = bot.get_chat_member(-1001485529816, username['user_id'])
+                    except ApiTelegramException as err:
+                        print(err)
                     user_lst.append(f'<a href="tg://user?id={chat_member.user.id}">{chat_member.user.first_name}</a>')
 
     mensaje = f"Atención:\n"
@@ -843,11 +879,9 @@ def scheduled_task_1():
 
 # Crea una instancia de BackgroundScheduler
 scheduler = BackgroundScheduler()
-# Obtiene una instancia de pytz para la zona horaria deseada
-tz = pytz.timezone('Cuba')
 # Programa la tarea para que se ejecute cada hora CronTrigger(hour=22, minute=34, timezone=tz)
-scheduler.add_job(scheduled_task, CronTrigger(hour=17, minute=50, timezone=tz))
-scheduler.add_job(scheduled_task_1, CronTrigger(hour=19, minute=14, timezone=tz))
+scheduler.add_job(scheduled_task, CronTrigger(hour=23, minute=51, timezone=tz))
+scheduler.add_job(scheduled_task_1, CronTrigger(hour=23, minute=58, timezone=tz))
 
 # Inicia el scheduler
 scheduler.start()
