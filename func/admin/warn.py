@@ -50,6 +50,7 @@ def add_warning(user_id):
 def ban_user(chat_id, user_id):
     bot.restrict_chat_member(chat_id, user_id, can_send_messages=False)
     #bot.kick_chat_member(chat_id, user_id)
+    users.update_one({"user_id": user_id}, {"$set": {"warnings": 0}})
     pass
 
 # Comando /warn

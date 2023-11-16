@@ -31,6 +31,7 @@ def list_admins(message):
                 if chat_admins.find_one({"user_id": admin.user.id}) is None:
                     chat_admins.insert_one({"user_id": admin.user.id, "username": admin.user.username})
         # envía un mensaje con la lista de administradores al chat
+        print(admin_names)
         bot.send_message(chat_id, f"Los administradores de {chat_info.title} son:\n" + "\n".join([f'<a href="https://t.me/{user.username}">{user.first_name}</a>' for user in admin_names]), parse_mode='html', disable_web_page_preview=True)
     else:
         bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
