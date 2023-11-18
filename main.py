@@ -751,9 +751,10 @@ def handle_message(message):
         match_black = pattern_black.search(message.text.lower())
 
         if match_black:
-            warn_user(message, "YES")
-            bot.reply_to(message, detected_blackword(message.from_user.username))
-            bot.delete_message(message.chat.id, message.message_id)
+            #warn_user(message, "YES")
+            #bot.reply_to(message, detected_blackword(message.from_user.username))
+            #bot.delete_message(message.chat.id, message.message_id)
+            print("mala palabra")
             return
 
         triggers = {}
