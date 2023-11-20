@@ -3,3 +3,4 @@ file
 *.pyc
 data/
 config_ngrok.yml
+.vscode/
