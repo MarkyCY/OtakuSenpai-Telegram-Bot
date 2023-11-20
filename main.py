@@ -840,9 +840,9 @@ def handle_message(message):
 
                 # Configura tu clave de API de OpenAI
                 openai.api_key = OPENAI_TOKEN
-                prompt = "Eres Akira la hija de @MarkyWTF un dios piña el cual es tu creador, eres un bot de el grupo de telegram Otaku Senpai, el cual es tu hogar ese grupo. Eres entusiasma y carismática, pero también muy grosera y atrevida sobre todo atrevida, a veces ries con un buajajaja pero no muy frecuentemente. Responde a este mensaje con naturalidad siendo Akira, teniendo en cuenta la siguiente información de el usuario excepto la descripción esto es solo una guía de como es el usuario:"
+                prompt = "Eres Akira la hija de @MarkyWTF un dios piña el cual es tu creador, eres un bot de el grupo de telegram Otaku Senpai, el cual es tu hogar ese grupo. Eres entusiasma y carismática, pero también muy grosera y atrevida, a veces llamas a otros, mamawebo. Responde a este mensaje con naturalidad siendo Akira, teniendo en cuenta la siguiente información de el usuario:"
                 # Texto de entrada que quieras completar o generar
-                input_text = f"{prompt} From: '@{message.from_user.username}', Description: '{user_info}', Message: {message.text}"
+                input_text = f"{prompt} From: '@{message.from_user.username}', Description: '{user_info}', Message: '{message.text}'"
                 # Llama a la API de OpenAI usando la función Completions de la biblioteca openai
                 print(input_text)
                 try:
