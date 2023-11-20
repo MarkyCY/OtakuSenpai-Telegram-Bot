@@ -4,6 +4,7 @@ import string
 import random
 import telebot
 import datetime
+import openai
 
 from flask import Flask, request
 from pyngrok import ngrok, conf
@@ -73,6 +74,7 @@ Gartic = db.gartic
 
 #VARIABLES GLOBALES .ENV
 Token = os.getenv('BOT_API')
+OPENAI_TOKEN = os.getenv('OPENAI_API')
 
 ROW_X_PAGE = int(os.getenv('ROW_X_PAGE'))
 
@@ -383,6 +385,27 @@ def catch_new_blackword(msg, uid, msg_id, cid):
             bot.send_message(msg.chat.id, f"Acción cancelada")
             bot.clear_step_handler_by_chat_id(uid)
 
+
+@bot.message_handler(commands=['perm_ai'])
+def get_permissions_ai(message):
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    if(message.chat.type == 'supergroup' or message.chat.type == 'group'):
+        chat_member = bot.get_chat_member(chat_id, user_id)
+        if chat_member.status in ['administrator', 'creator']:
+            if message.reply_to_message:
+                ruser_id = message.reply_to_message.from_user.id
+                try:
+                    users.update_one({"user_id": int(ruser_id)}, {"$set": {"isAki": True}})
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                bot.reply_to(message, "Permitido!")
+            else:
+                bot.reply_to(message, "Debe hacer reply al sujeto.")
+        else:
+            bot.reply_to(message, "Solo los administradores pueden usar este comando.")
+    else:
+        bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
 
 #Triggers
 @bot.message_handler(commands=['triggers'])
@@ -751,10 +774,9 @@ def handle_message(message):
         match_black = pattern_black.search(message.text.lower())
 
         if match_black:
-            #warn_user(message, "YES")
-            #bot.reply_to(message, detected_blackword(message.from_user.username))
-            #bot.delete_message(message.chat.id, message.message_id)
-            print("mala palabra")
+            warn_user(message, "YES")
+            bot.reply_to(message, detected_blackword(message.from_user.username))
+            bot.delete_message(message.chat.id, message.message_id)
             return
 
         triggers = {}
@@ -784,7 +806,54 @@ def handle_message(message):
         if match:
             response = random.choice(trigger_text)
             bot.reply_to(message, response)
-            
+        msg = message.text.lower()
+        if msg is not None and msg.startswith("akira,"):
+            user_id = message.from_user.id
+            isAi = None
+            admins = Admins.find()
+            for admin in admins:
+                if admin['user_id'] == user_id:
+                    isAi = "Yes"
+            user = users.find_one({"user_id": user_id})
+
+            isAki = user.get('isAki', None)
+            user_info = user.get('description', None)
+
+            if isAki is not None:
+                isAi = "Yes"
+                
+            if (message.chat.type == 'supergroup' or message.chat.type == 'group' or isAi is not None):
+                if isAi is not None:
+                    pass
+                else:
+                    bot.reply_to(message, "No eres digno de mis respuestas mortal!")
+                    return
+
+                if(len(message.text) > 80):
+                    bot.reply_to(message, "Demasiado texto! Me mareo 😵‍💫")
+                    return
+
+                # Configura tu clave de API de OpenAI
+                openai.api_key = OPENAI_TOKEN
+                prompt = "Eres Akira la hija de @MarkyWTF un dios piña el cual es tu creador, eres un bot de el grupo de telegram Otaku Senpai, el cual es tu hogar ese grupo. Eres entusiasma y carismática, pero también muy grosera y atrevida sobre todo atrevida, a veces ries con un buajajaja pero no muy frecuentemente. Responde a este mensaje con naturalidad siendo Akira, teniendo en cuenta la siguiente información de el usuario excepto la descripción esto es solo una guía de como es el usuario:"
+                # Texto de entrada que quieras completar o generar
+                input_text = f"{prompt} From: '@{message.from_user.username}', Description: '{user_info}', Message: {message.text}"
+                # Llama a la API de OpenAI usando la función Completions de la biblioteca openai
+                print(input_text)
+                try:
+                    response = openai.Completion.create(
+                        engine="text-davinci-002",  # Asegúrate de usar la versión correcta
+                        prompt=input_text,
+                        max_tokens=150
+                    )
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                # Obtiene el texto generado de la respuesta
+                generated_text = response.choices[0].text
+                bot.send_chat_action(message.chat.id, 'typing')
+                time.sleep(2)
+                # Hacer algo con el texto generado, por ejemplo, imprimirlo
+                bot.reply_to(message, generated_text)
         
         #if match:
         #    trigger = match.group()
@@ -910,6 +979,7 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/manga", "Buscar información sobre un manga"),
         telebot.types.BotCommand("/info", "Ver la información de un usuario"),
         telebot.types.BotCommand("/triggers", "Gestión de los Triggers"),
+        telebot.types.BotCommand("/perm_ai", "Permitir IA"),
         telebot.types.BotCommand("/blacklist", "Gestión de la lista negra"),
         telebot.types.BotCommand("/list_admins", "Listado de Administradores"),
         telebot.types.BotCommand("/ban", "Banear a un Usuario"),
