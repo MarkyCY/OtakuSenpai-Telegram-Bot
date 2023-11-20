@@ -10,3 +10,4 @@ six
 flask
 pyngrok
 waitress
+openai
