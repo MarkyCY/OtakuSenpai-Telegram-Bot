@@ -390,21 +390,32 @@ def catch_new_blackword(msg, uid, msg_id, cid):
 def get_permissions_ai(message):
     user_id = message.from_user.id
     chat_id = message.chat.id
+    username = message.from_user.username
     if(message.chat.type == 'supergroup' or message.chat.type == 'group'):
         chat_member = bot.get_chat_member(chat_id, user_id)
         if chat_member.status in ['administrator', 'creator']:
             if message.reply_to_message:
-                ruser_id = message.reply_to_message.from_user.id
-                user = users.find_one({"user_id": int(ruser_id)})
-                try:
-                    if user['isAki'] is True:
-                        users.update_one({"user_id": int(ruser_id)}, {"$set": {"isAki": False}})
-                        bot.reply_to(message.reply_to_message, "Te quitaron los permisos buajaja!")
-                    else:
-                        users.update_one({"user_id": int(ruser_id)}, {"$set": {"isAki": True}})
-                        bot.reply_to(message.reply_to_message, "Wiii ya puedes hablar conmigo!")
-                except Exception as e:
-                    print(f"An error occurred: {e}")
+                user_id = message.reply_to_message.from_user.id
+                username = message.reply_to_message.from_user.username
+
+                user = users.find_one({"user_id": user_id})
+                if user is None:
+                    users.insert_one({"user_id": user_id, "username": username})
+                isAki = user.get('isAki', None)
+                print(user)
+                print(isAki)
+                if isAki is not None:
+                    try:
+                        users.update_one({"user_id": user_id}, {"$unset": {"isAki": ""}})
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
+                    bot.reply_to(message.reply_to_message, "Te quitaron los permisos buajaja!")
+                else:
+                    try:
+                        users.update_one({"user_id": user_id}, {"$set": {"isAki": True}})
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
+                    bot.reply_to(message.reply_to_message, "Wiii ya puedes hablar conmigo!")
             else:
                 bot.reply_to(message, "Debe hacer reply al sujeto.")
         else:
