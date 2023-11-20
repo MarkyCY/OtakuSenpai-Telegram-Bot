@@ -395,11 +395,16 @@ def get_permissions_ai(message):
         if chat_member.status in ['administrator', 'creator']:
             if message.reply_to_message:
                 ruser_id = message.reply_to_message.from_user.id
+                user = users.find_one({"user_id": int(ruser_id)})
                 try:
-                    users.update_one({"user_id": int(ruser_id)}, {"$set": {"isAki": True}})
+                    if user['isAki'] is True:
+                        users.update_one({"user_id": int(ruser_id)}, {"$set": {"isAki": False}})
+                        bot.reply_to(message.reply_to_message, "Te quitaron los permisos buajaja!")
+                    else:
+                        users.update_one({"user_id": int(ruser_id)}, {"$set": {"isAki": True}})
+                        bot.reply_to(message.reply_to_message, "Wiii ya puedes hablar conmigo!")
                 except Exception as e:
                     print(f"An error occurred: {e}")
-                bot.reply_to(message, "Permitido!")
             else:
                 bot.reply_to(message, "Debe hacer reply al sujeto.")
         else:
