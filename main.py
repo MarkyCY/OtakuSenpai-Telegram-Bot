@@ -387,6 +387,76 @@ def catch_new_blackword(msg, uid, msg_id, cid):
             bot.clear_step_handler_by_chat_id(uid)
 
 
+@bot.message_handler(commands=['afk'])
+def afk(message):
+    user_id = message.from_user.id
+    args = message.text.split(None, 1)
+    notice = ""
+    
+    if len(args) >= 2:
+        reason = args[1]
+        if len(reason) > 100:
+            reason = reason[:100]
+            notice = "\nSu motivo de afk se redujo a 100 caracteres."
+    else:
+        reason = ""
+
+    # Actualizar MongoDB
+    users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_afk": True, "reason": reason}},
+        upsert=True
+    )
+
+    fname = message.from_user.first_name
+    res = "{} ahora está AFK!{}".format(fname, notice)
+    bot.reply_to(message, res)
+
+@bot.message_handler(func=lambda message: True)
+def check_afk(message):
+    if message.reply_to_message:
+        user_id = message.reply_to_message.from_user.id
+        fst_name = message.reply_to_message.from_user.first_name
+        userc_id = message.reply_to_message.chat.id
+
+        user = users.find_one({"user_id": user_id})
+        if user is not None and user["is_afk"] is not None:
+            if not user["reason"]:
+                if int(userc_id) == int(user_id):
+                    return
+                res = f"{fst_name} está afk"
+                bot.reply_to(message, res)
+            else:
+                if int(userc_id) == int(user_id):
+                    return
+                res = f"{fst_name} está afk.\nRazón: {user['reason']}"
+                bot.reply_to(message, res)
+
+    #revisar si está afk
+    user_id = message.from_user.id
+    user = message.from_user
+ 
+    if not user:  # Ignorar canales
+        return
+
+    # Verificar si el usuario estaba en modo afk
+    user_afk = users.find_one({"user_id": user_id})
+
+    if user_afk is not None and user_afk["is_afk"] is not None:
+        # Eliminar la entrada de afk de MongoDB
+        users.update_one({"user_id": user_id}, {"$set": {"is_afk": None}})
+
+        # Enviar un mensaje de bienvenida de vuelta al usuario
+        try:
+            options = [
+                '{} a vuelto!', 'A mira volvió {}!'
+            ]
+            chosen_option = random.choice(options)
+            bot.reply_to(message, chosen_option.format(user.first_name))
+        except Exception as e:
+            print(f"Error al enviar mensaje de bienvenida: {e}")
+
+
 @bot.message_handler(commands=['tr'])
 def translate_command(message):
     # Obtener el texto después del comando /tr
@@ -1018,8 +1088,10 @@ if __name__ == '__main__':
     bot.set_my_commands([
         telebot.types.BotCommand("/start", "..."),
         telebot.types.BotCommand("/anime", "Buscar información sobre un anime"),
+        telebot.types.BotCommand("/afk", "Modo afk"),
         telebot.types.BotCommand("/manga", "Buscar información sobre un manga"),
         telebot.types.BotCommand("/info", "Ver la información de un usuario"),
+        telebot.types.BotCommand("/tr", "Traducir elementos"),
         telebot.types.BotCommand("/triggers", "Gestión de los Triggers"),
         telebot.types.BotCommand("/perm_ai", "Permitir IA"),
         telebot.types.BotCommand("/blacklist", "Gestión de la lista negra"),
