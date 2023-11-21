@@ -412,50 +412,6 @@ def afk(message):
     res = "{} ahora está AFK!{}".format(fname, notice)
     bot.reply_to(message, res)
 
-@bot.message_handler(func=lambda message: True)
-def check_afk(message):
-    if message.reply_to_message:
-        user_id = message.reply_to_message.from_user.id
-        fst_name = message.reply_to_message.from_user.first_name
-        userc_id = message.reply_to_message.chat.id
-
-        user = users.find_one({"user_id": user_id})
-        if user is not None and user["is_afk"] is not None:
-            if not user["reason"]:
-                if int(userc_id) == int(user_id):
-                    return
-                res = f"{fst_name} está afk"
-                bot.reply_to(message, res)
-            else:
-                if int(userc_id) == int(user_id):
-                    return
-                res = f"{fst_name} está afk.\nRazón: {user['reason']}"
-                bot.reply_to(message, res)
-
-    #revisar si está afk
-    user_id = message.from_user.id
-    user = message.from_user
- 
-    if not user:  # Ignorar canales
-        return
-
-    # Verificar si el usuario estaba en modo afk
-    user_afk = users.find_one({"user_id": user_id})
-
-    if user_afk is not None and user_afk["is_afk"] is not None:
-        # Eliminar la entrada de afk de MongoDB
-        users.update_one({"user_id": user_id}, {"$set": {"is_afk": None}})
-
-        # Enviar un mensaje de bienvenida de vuelta al usuario
-        try:
-            options = [
-                '{} a vuelto!', 'A mira volvió {}!'
-            ]
-            chosen_option = random.choice(options)
-            bot.reply_to(message, chosen_option.format(user.first_name))
-        except Exception as e:
-            print(f"Error al enviar mensaje de bienvenida: {e}")
-
 
 @bot.message_handler(commands=['tr'])
 def translate_command(message):
@@ -970,6 +926,47 @@ def handle_message(message):
                 # Hacer algo con el texto generado, por ejemplo, imprimirlo
                 bot.reply_to(message, generated_text)
         
+        if message.reply_to_message:
+            user_id = message.reply_to_message.from_user.id
+            fst_name = message.reply_to_message.from_user.first_name
+            userc_id = message.reply_to_message.chat.id
+    
+            user = users.find_one({"user_id": user_id})
+            if user is not None and user["is_afk"] is not None:
+                if not user["reason"]:
+                    if int(userc_id) == int(user_id):
+                        return
+                    res = f"{fst_name} está afk"
+                    bot.reply_to(message, res)
+                else:
+                    if int(userc_id) == int(user_id):
+                        return
+                    res = f"{fst_name} está afk.\nRazón: {user['reason']}"
+                    bot.reply_to(message, res)
+    
+        #revisar si está afk
+        user_id = message.from_user.id
+        user = message.from_user
+    
+        if not user:  # Ignorar canales
+            return
+    
+        # Verificar si el usuario estaba en modo afk
+        user_afk = users.find_one({"user_id": user_id})
+    
+        if user_afk is not None and user_afk["is_afk"] is not None:
+            # Eliminar la entrada de afk de MongoDB
+            users.update_one({"user_id": user_id}, {"$set": {"is_afk": None}})
+    
+            # Enviar un mensaje de bienvenida de vuelta al usuario
+            try:
+                options = [
+                    '{} a vuelto!', 'A mira volvió {}!'
+                ]
+                chosen_option = random.choice(options)
+                bot.reply_to(message, chosen_option.format(user.first_name))
+            except Exception as e:
+                print(f"Error al enviar mensaje de bienvenida: {e}")
         #if match:
         #    trigger = match.group()
         #    # Get a random response for the trigger from the database
