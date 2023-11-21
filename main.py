@@ -8,6 +8,7 @@ import openai
 
 from flask import Flask, request
 from pyngrok import ngrok, conf
+from deep_translator import GoogleTranslator
 from waitress import serve
 
 from pymongo import MongoClient
@@ -385,6 +386,31 @@ def catch_new_blackword(msg, uid, msg_id, cid):
             bot.send_message(msg.chat.id, f"Acción cancelada")
             bot.clear_step_handler_by_chat_id(uid)
 
+
+@bot.message_handler(commands=['tr'])
+def translate_command(message):
+    # Obtener el texto después del comando /tr
+    if message.reply_to_message:
+        text_to_translate = message.reply_to_message.text[4:].strip()
+        # Verificar si se proporciona un texto para traducir
+        if not text_to_translate:
+            bot.reply_to(message, "Por favor, proporciona un texto para traducir. Ejemplo: /tr Hello, how are you?")
+            return
+    
+        # Idiomas de origen y destino
+        source_language = 'auto'  # Auto detectar idioma de origen
+        target_language = 'es'  # español
+    
+        try:
+            # Realizar la traducción
+            translation = GoogleTranslator(source=source_language, target=target_language).translate(text_to_translate)
+    
+            # Enviar la traducción al usuario
+            bot.reply_to(message, f"Traducción 'ES': {translation}")
+    
+        except Exception as e:
+            # Manejar cualquier error durante la traducción
+            bot.reply_to(message, f"Ocurrió un error durante la traducción: {str(e)}")
 
 @bot.message_handler(commands=['perm_ai'])
 def get_permissions_ai(message):
