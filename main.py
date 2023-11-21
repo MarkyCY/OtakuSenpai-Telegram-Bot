@@ -491,27 +491,30 @@ def get_permissions_ai(message):
         chat_member = bot.get_chat_member(chat_id, user_id)
         if chat_member.status in ['administrator', 'creator']:
             if message.reply_to_message:
-                user_id = message.reply_to_message.from_user.id
-                username = message.reply_to_message.from_user.username
-
-                user = users.find_one({"user_id": user_id})
-                if user is None:
-                    users.insert_one({"user_id": user_id, "username": username})
-                isAki = user.get('isAki', None)
-                print(user)
-                print(isAki)
-                if isAki is not None:
-                    try:
-                        users.update_one({"user_id": user_id}, {"$unset": {"isAki": ""}})
-                    except Exception as e:
-                        print(f"An error occurred: {e}")
-                    bot.reply_to(message.reply_to_message, "Te quitaron los permisos buajaja!")
+                if user_id == 873919300:
+                    user_id = message.reply_to_message.from_user.id
+                    username = message.reply_to_message.from_user.username
+    
+                    user = users.find_one({"user_id": user_id})
+                    if user is None:
+                        users.insert_one({"user_id": user_id, "username": username})
+                    isAki = user.get('isAki', None)
+                    print(user)
+                    print(isAki)
+                    if isAki is not None:
+                        try:
+                            users.update_one({"user_id": user_id}, {"$unset": {"isAki": ""}})
+                        except Exception as e:
+                            print(f"An error occurred: {e}")
+                        bot.reply_to(message.reply_to_message, "Te quitaron los permisos buajaja!")
+                    else:
+                        try:
+                            users.update_one({"user_id": user_id}, {"$set": {"isAki": True}})
+                        except Exception as e:
+                            print(f"An error occurred: {e}")
+                        bot.reply_to(message.reply_to_message, "Wiii ya puedes hablar conmigo!")
                 else:
-                    try:
-                        users.update_one({"user_id": user_id}, {"$set": {"isAki": True}})
-                    except Exception as e:
-                        print(f"An error occurred: {e}")
-                    bot.reply_to(message.reply_to_message, "Wiii ya puedes hablar conmigo!")
+                    bot.reply_to(message, "Solo mi padre puede usar ese comando por ahora :(")
             else:
                 bot.reply_to(message, "Debe hacer reply al sujeto.")
         else:
