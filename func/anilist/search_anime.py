@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from func.api_anilist import search_anime
+from deep_translator import GoogleTranslator
 import requests
 import re
 import telebot
@@ -16,6 +17,9 @@ users = db.users
 #Importamos los datos necesarios para el bot
 Token = os.getenv('BOT_API')
 bot = telebot.TeleBot(Token)
+
+source_language = 'auto'  # Auto detectar idioma de origen
+target_language = 'es'  # español
 
 def show_anime(message):
     cid = message.chat.id
@@ -49,7 +53,8 @@ def show_anime(message):
                     adult = "Desconocido"
 
             html_regex = re.compile(r'<[^>]+>')
-            description = re.sub(html_regex, '', anime['data']['Media']['description'])[:500]
+            tr_description = re.sub(html_regex, '', anime['data']['Media']['description'])[:500]
+            description = GoogleTranslator(source=source_language, target=target_language).translate(tr_description)
             image = anime['data']['Media']['coverImage']['large']
             res = requests.get(image)
             print(res.status_code, cid)

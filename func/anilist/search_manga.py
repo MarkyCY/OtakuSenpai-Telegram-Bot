@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from func.api_anilist import search_manga
+from deep_translator import GoogleTranslator
 import requests
 import re
 import telebot
@@ -12,6 +13,9 @@ load_dotenv()
 client = MongoClient('localhost', 27017)
 db = client.otakusenpai
 users = db.users
+
+source_language = 'auto'  # Auto detectar idioma de origen
+target_language = 'es'  # español
 
 #Importamos los datos necesarios para el bot
 Token = os.getenv('BOT_API')
@@ -47,7 +51,8 @@ def show_manga(message):
                     adult = "Desconocido"
 
             html_regex = re.compile(r'<[^>]+>')
-            description = re.sub(html_regex, '', manga['data']['Media']['description'])
+            tr_description = re.sub(html_regex, '', manga['data']['Media']['description'])
+            description = GoogleTranslator(source=source_language, target=target_language).translate(tr_description)
 
             image = manga['data']['Media']['coverImage']['large']
             res = requests.get(image)
