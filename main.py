@@ -932,7 +932,7 @@ def handle_message(message):
             userc_id = message.reply_to_message.chat.id
     
             user = users.find_one({"user_id": user_id})
-            if user is not None and user["is_afk"] is not None:
+            if user is not None and "is_afk" in user:
                 if not user["reason"]:
                     if int(userc_id) == int(user_id):
                         return
@@ -954,9 +954,10 @@ def handle_message(message):
         # Verificar si el usuario estaba en modo afk
         user_afk = users.find_one({"user_id": user_id})
     
-        if user_afk is not None and user_afk["is_afk"] is not None:
+        if user_afk is not None and "is_afk" in user_afk:
             # Eliminar la entrada de afk de MongoDB
-            users.update_one({"user_id": user_id}, {"$set": {"is_afk": None}})
+            users.update_one({"user_id": user_id}, {"$unset": {"is_afk": "", "reason": ""}})
+            #users.update_one({"user_id": user_id}, {"$unset": {"reason": ""}})
     
             # Enviar un mensaje de bienvenida de vuelta al usuario
             try:
