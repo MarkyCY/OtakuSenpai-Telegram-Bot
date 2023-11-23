@@ -286,7 +286,7 @@ def respuesta_botones_inline(call):
         o_id = partes[1]
         sel = partes[2]
         del_trigger_text(cid, mid, o_id, sel)
-
+    
     if is_gput_trigger(call.data):
         print("haciendo global")
         partes = call.data.split("_")
@@ -391,6 +391,10 @@ def catch_new_blackword(msg, uid, msg_id, cid):
 
 @bot.message_handler(commands=['afk'])
 def afk_command(message):
+    set_afk(message)
+
+@bot.message_handler(func=lambda message: message.text.lower().startswith('brb') or message.text.lower().startswith('brb '))
+def brb_command(message):
     set_afk(message)
 
 
@@ -859,22 +863,23 @@ def handle_message(message):
        
         #AKF
         if message.reply_to_message:
-            user_id = message.reply_to_message.from_user.id
-            fst_name = message.reply_to_message.from_user.first_name
-            userc_id = message.reply_to_message.chat.id
-
-            user = users.find_one({"user_id": user_id})
-            if user is not None and "is_afk" in user:
-                if not user["reason"]:
-                    if int(userc_id) == int(user_id):
-                        return
-                    res = f"{fst_name} está afk"
-                    bot.reply_to(message, res)
-                else:
-                    if int(userc_id) == int(user_id):
-                        return
-                    res = f"{fst_name} está afk.\nRazón: {user['reason']}"
-                    bot.reply_to(message, res)
+            if message.reply_to_message.forum_topic_created is None:
+                user_id = message.reply_to_message.from_user.id
+                fst_name = message.reply_to_message.from_user.first_name
+                userc_id = message.reply_to_message.chat.id
+                #'forum_topic_created': None
+                user = users.find_one({"user_id": user_id})
+                if user is not None and "is_afk" in user:
+                    if not user["reason"]:
+                        if int(userc_id) == int(user_id):
+                            return
+                        res = f"{fst_name} está afk"
+                        bot.reply_to(message, res)
+                    else:
+                        if int(userc_id) == int(user_id):
+                            return
+                        res = f"{fst_name} está afk.\nRazón: {user['reason']}"
+                        bot.reply_to(message, res)
 
         # Detectar si el mensaje contiene el @username del cliente
         if hasattr(message, 'entities'):
@@ -890,10 +895,10 @@ def handle_message(message):
                             user_get = bot.get_chat(user_id)
                             if user is not None and "is_afk" in user:
                                 if not user["reason"]:
-                                    res = f"{user_get.first_name} está afk"
+                                    res = f"{user_get.first_name} está AFK"
                                     bot.reply_to(message, res)
                                 else:
-                                    res = f"{user_get.first_name} está afk.\nRazón: {user['reason']}"
+                                    res = f"{user_get.first_name} está AFK.\nRazón: {user['reason']}"
                                     bot.reply_to(message, res)
     
         #Revisar si está afk
@@ -913,7 +918,7 @@ def handle_message(message):
             # Enviar un mensaje de bienvenida de vuelta al usuario
             try:
                 options = [
-                    '{} a vuelto!', 'A mira volvió {}!'
+                    '{} regresaste calv@!', 'Ah mira volvió {}!', 'Has vuelto {} mamawebo'
                 ]
                 chosen_option = random.choice(options)
                 bot.reply_to(message, chosen_option.format(user.first_name))
