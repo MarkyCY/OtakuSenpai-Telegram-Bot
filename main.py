@@ -8,7 +8,6 @@ import openai
 
 from flask import Flask, request
 from pyngrok import ngrok, conf
-from deep_translator import GoogleTranslator
 from waitress import serve
 
 from pymongo import MongoClient
@@ -36,6 +35,9 @@ from func.info import info
 from func.sticker_info import sticker_info
 from func.list_admins import list_admins, isAdmin
 from func.report import report
+from func.traduction import translate_command
+from func.akira_ai import get_permissions_ai
+from func.afk import set_afk
 #Admin Command
 from func.admin.warn import warn_user
 from func.admin.ban import ban_user
@@ -388,95 +390,17 @@ def catch_new_blackword(msg, uid, msg_id, cid):
 
 
 @bot.message_handler(commands=['afk'])
-def afk(message):
-    user_id = message.from_user.id
-    args = message.text.split(None, 1)
-    notice = ""
-    
-    if len(args) >= 2:
-        reason = args[1]
-        if len(reason) > 100:
-            reason = reason[:100]
-            notice = "\nSu motivo de afk se redujo a 100 caracteres."
-    else:
-        reason = ""
-
-    # Actualizar MongoDB
-    users.update_one(
-        {"user_id": user_id},
-        {"$set": {"is_afk": True, "reason": reason}},
-        upsert=True
-    )
-
-    fname = message.from_user.first_name
-    res = "{} ahora está AFK!{}".format(fname, notice)
-    bot.reply_to(message, res)
+def afk_command(message):
+    set_afk(message)
 
 
 @bot.message_handler(commands=['tr'])
-def translate_command(message):
-    # Obtener el texto después del comando /tr
-    if message.reply_to_message:
-        text_to_translate = message.reply_to_message.text[4:].strip()
-        # Verificar si se proporciona un texto para traducir
-        if not text_to_translate:
-            bot.reply_to(message, "Por favor, proporciona un texto para traducir. Ejemplo: /tr Hello, how are you?")
-            return
-    
-        # Idiomas de origen y destino
-        source_language = 'auto'  # Auto detectar idioma de origen
-        target_language = 'es'  # español
-    
-        try:
-            # Realizar la traducción
-            translation = GoogleTranslator(source=source_language, target=target_language).translate(text_to_translate)
-    
-            # Enviar la traducción al usuario
-            bot.reply_to(message, f"Traducción 'ES': {translation}")
-    
-        except Exception as e:
-            # Manejar cualquier error durante la traducción
-            bot.reply_to(message, f"Ocurrió un error durante la traducción: {str(e)}")
+def tr_command(message):
+    translate_command(message)
 
 @bot.message_handler(commands=['perm_ai'])
-def get_permissions_ai(message):
-    user_id = message.from_user.id
-    chat_id = message.chat.id
-    username = message.from_user.username
-    if(message.chat.type == 'supergroup' or message.chat.type == 'group'):
-        chat_member = bot.get_chat_member(chat_id, user_id)
-        if chat_member.status in ['administrator', 'creator']:
-            if message.reply_to_message:
-                if user_id == 873919300:
-                    user_id = message.reply_to_message.from_user.id
-                    username = message.reply_to_message.from_user.username
-    
-                    user = users.find_one({"user_id": user_id})
-                    if user is None:
-                        users.insert_one({"user_id": user_id, "username": username})
-                    isAki = user.get('isAki', None)
-                    print(user)
-                    print(isAki)
-                    if isAki is not None:
-                        try:
-                            users.update_one({"user_id": user_id}, {"$unset": {"isAki": ""}})
-                        except Exception as e:
-                            print(f"An error occurred: {e}")
-                        bot.reply_to(message.reply_to_message, "Te quitaron los permisos buajaja!")
-                    else:
-                        try:
-                            users.update_one({"user_id": user_id}, {"$set": {"isAki": True}})
-                        except Exception as e:
-                            print(f"An error occurred: {e}")
-                        bot.reply_to(message.reply_to_message, "Wiii ya puedes hablar conmigo!")
-                else:
-                    bot.reply_to(message, "Solo mi padre puede usar ese comando por ahora :(")
-            else:
-                bot.reply_to(message, "Debe hacer reply al sujeto.")
-        else:
-            bot.reply_to(message, "Solo los administradores pueden usar este comando.")
-    else:
-        bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
+def akira_perm_ai(message):
+    get_permissions_ai(message)
 
 #Triggers
 @bot.message_handler(commands=['triggers'])
@@ -831,10 +755,9 @@ def command_unmute_user(message):
 #    print(frases_asignadas)
 
 #LAMBDA
-
-#Triggers
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
+    #Triggers
     if message.chat.type in ['group', 'supergroup']:
         blackwords = []
         for doc in Blacklist.find():
@@ -877,6 +800,10 @@ def handle_message(message):
         if match:
             response = random.choice(trigger_text)
             bot.reply_to(message, response)
+        
+
+
+        #Akira AI
         msg = message.text.lower()
         if msg is not None and msg.startswith("akira,"):
             user_id = message.from_user.id
@@ -906,31 +833,36 @@ def handle_message(message):
 
                 # Configura tu clave de API de OpenAI
                 openai.api_key = OPENAI_TOKEN
-                prompt = "Eres Akira la hija de @MarkyWTF un dios piña el cual es tu creador, eres un bot de el grupo de telegram Otaku Senpai, el cual es tu hogar ese grupo. Eres entusiasma y carismática, pero también muy grosera y atrevida, a veces llamas a otros, mamawebo. Responde a este mensaje con naturalidad siendo Akira, teniendo en cuenta la siguiente información de el usuario:"
+                prompt = f"Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también grosera y atrevida. A veces llamas a otros 'mamawebo'. Teniendo en cuenta la siguiente información del usuario: "
+
                 # Texto de entrada que quieras completar o generar
-                input_text = f"{prompt} From: '@{message.from_user.username}', Description: '{user_info}', Message: '{message.text}'"
+                input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}'] Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol."
                 # Llama a la API de OpenAI usando la función Completions de la biblioteca openai
                 print(input_text)
                 try:
                     response = openai.Completion.create(
-                        engine="text-davinci-002",  # Asegúrate de usar la versión correcta
+                        engine="text-davinci-003",
                         prompt=input_text,
                         max_tokens=150
                     )
                 except Exception as e:
                     print(f"An error occurred: {e}")
+                    return
                 # Obtiene el texto generado de la respuesta
                 generated_text = response.choices[0].text
                 bot.send_chat_action(message.chat.id, 'typing')
-                time.sleep(2)
+                time.sleep(3)
                 # Hacer algo con el texto generado, por ejemplo, imprimirlo
                 bot.reply_to(message, generated_text)
-        
+       
+       
+       
+        #AKF
         if message.reply_to_message:
             user_id = message.reply_to_message.from_user.id
             fst_name = message.reply_to_message.from_user.first_name
             userc_id = message.reply_to_message.chat.id
-    
+
             user = users.find_one({"user_id": user_id})
             if user is not None and "is_afk" in user:
                 if not user["reason"]:
@@ -943,11 +875,30 @@ def handle_message(message):
                         return
                     res = f"{fst_name} está afk.\nRazón: {user['reason']}"
                     bot.reply_to(message, res)
+
+        # Detectar si el mensaje contiene el @username del cliente
+        if hasattr(message, 'entities'):
+            if message.entities is not None:
+                for entity in message.entities:
+                    if entity.type == "mention":
+                        user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
+                        #if check_afk(user_name):
+                        #    bot.reply_to(message, "El usuario está AFK")
+                        user = users.find_one({"username": user_name})
+                        if user is not None:
+                            user_id = user.get('user_id', None)
+                            user_get = bot.get_chat(user_id)
+                            if user is not None and "is_afk" in user:
+                                if not user["reason"]:
+                                    res = f"{user_get.first_name} está afk"
+                                    bot.reply_to(message, res)
+                                else:
+                                    res = f"{user_get.first_name} está afk.\nRazón: {user['reason']}"
+                                    bot.reply_to(message, res)
     
-        #revisar si está afk
+        #Revisar si está afk
         user_id = message.from_user.id
         user = message.from_user
-    
         if not user:  # Ignorar canales
             return
     
