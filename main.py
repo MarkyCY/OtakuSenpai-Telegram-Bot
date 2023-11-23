@@ -837,10 +837,10 @@ def handle_message(message):
 
                 # Configura tu clave de API de OpenAI
                 openai.api_key = OPENAI_TOKEN
-                prompt = f"Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también grosera y atrevida. A veces llamas a otros 'mamawebo'. Teniendo en cuenta la siguiente información del usuario: "
+                prompt = f"Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo'. Teniendo en cuenta la siguiente información del usuario: "
 
                 # Texto de entrada que quieras completar o generar
-                input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}'] Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol."
+                input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}'] Responde el texto de user_message como si fueras Akira molesta porque no encuentras las cucharas. Esto con textos cortos con formato de mensaje de telegram siguiendo el rol."
                 # Llama a la API de OpenAI usando la función Completions de la biblioteca openai
                 print(input_text)
                 try:
@@ -857,7 +857,7 @@ def handle_message(message):
                 bot.send_chat_action(message.chat.id, 'typing')
                 time.sleep(3)
                 # Hacer algo con el texto generado, por ejemplo, imprimirlo
-                bot.reply_to(message, generated_text)
+                bot.reply_to(message, generated_text, parse_mode='HTML')
        
        
        
@@ -873,13 +873,13 @@ def handle_message(message):
                     if not user["reason"]:
                         if int(userc_id) == int(user_id):
                             return
-                        res = f"{fst_name} está afk"
-                        bot.reply_to(message, res)
+                        res = f"<b>{fst_name}</b> está AFK"
+                        bot.reply_to(message, res, parse_mode='HTML')
                     else:
                         if int(userc_id) == int(user_id):
                             return
-                        res = f"{fst_name} está afk.\nRazón: {user['reason']}"
-                        bot.reply_to(message, res)
+                        res = f"<b>{fst_name}</b> está AFK.\nRazón: {user['reason']}"
+                        bot.reply_to(message, res, parse_mode='HTML')
 
         # Detectar si el mensaje contiene el @username del cliente
         if hasattr(message, 'entities'):
@@ -895,11 +895,11 @@ def handle_message(message):
                             user_get = bot.get_chat(user_id)
                             if user is not None and "is_afk" in user:
                                 if not user["reason"]:
-                                    res = f"{user_get.first_name} está AFK"
-                                    bot.reply_to(message, res)
+                                    res = f"<b>{user_get.first_name}</b> está AFK"
+                                    bot.reply_to(message, res, parse_mode='HTML')
                                 else:
-                                    res = f"{user_get.first_name} está AFK.\nRazón: {user['reason']}"
-                                    bot.reply_to(message, res)
+                                    res = f"<b>{user_get.first_name}</b> está AFK.\nRazón: {user['reason']}"
+                                    bot.reply_to(message, res, parse_mode='HTML')
     
         #Revisar si está afk
         user_id = message.from_user.id
