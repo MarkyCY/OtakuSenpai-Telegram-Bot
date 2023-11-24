@@ -12,3 +12,4 @@ pyngrok
 waitress
 openai
 deep-translator
+colorama
