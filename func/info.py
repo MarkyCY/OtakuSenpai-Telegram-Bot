@@ -2,11 +2,17 @@ import telebot
 import os
 
 from dotenv import load_dotenv
+from pymongo import MongoClient
 load_dotenv()
 
 #Importamos los datos necesarios para el bot
 Token = os.getenv('BOT_API')
 bot = telebot.TeleBot(Token)
+
+# Conectar a la base de datos
+client = MongoClient('localhost', 27017)
+db = client.otakusenpai
+users = db.users
 
 def info(message):
     #Verificar si el mensaje es una respuesta a otro mensaje
@@ -16,8 +22,10 @@ def info(message):
         #Obtengo el rol del usuario en el chat
         chat_member = bot.get_chat_member(message.chat.id, user.id)
         role = chat_member.status
+        user_db = users.find_one({"user_id": user.id})
+        description = user_db.get('description', '-')
         #Envio la información del usuario y su rol en un mensaje de reply al mensaje original
-        bot.reply_to(message.reply_to_message, f"ID: {user.id}\nNombre: {user.first_name}\nNombre de usuario: @{user.username}\nRol: {role.capitalize()}")
+        bot.reply_to(message.reply_to_message, f"ID: {user.id}\nNombre: {user.first_name}\nNombre de usuario: @{user.username}\nRol: {role.capitalize()}\nDescripción: {description}")
     else:
         #Si el mensaje no es una respuesta a otro mensaje, obtener los datos del usuario que envió el comando
         user = message.from_user
