@@ -841,7 +841,18 @@ def handle_message(message):
                 if(len(message.text) > 80):
                     bot.reply_to(message, "Demasiado texto! Me mareo 😵‍💫")
                     return
-
+                
+                #Mention
+                mention = "None"
+                if hasattr(message, 'entities'):
+                    if message.entities is not None:
+                        for entity in message.entities:
+                            if entity.type == "mention":
+                                user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
+                                user = users.find_one({"username": user_name})
+                                descr = user.get('description', "None")
+                                mention = f"to_username: @{user_name}, description: '{descr}'"
+   
                 # Configura tu clave de API de OpenAI
                 openai.api_key = OPENAI_TOKEN
                 prompt = f"Rol: Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo'. Teniendo en cuenta la siguiente información del usuario: "
