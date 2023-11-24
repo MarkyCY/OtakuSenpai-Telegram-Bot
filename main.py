@@ -38,6 +38,7 @@ from func.report import report
 from func.traduction import translate_command
 from func.akira_ai import get_permissions_ai
 from func.afk import set_afk
+from func.set_bio import set_description
 #Admin Command
 from func.admin.warn import warn_user
 from func.admin.ban import ban_user
@@ -51,6 +52,8 @@ from func.anilist.search_anime import show_anime
 from func.concurso.sub_user import subscribe_user
 #Evento
 from func.event import calvicia
+import colorama
+from colorama import Fore
 load_dotenv()
 
 web_server = Flask(__name__)
@@ -388,6 +391,10 @@ def catch_new_blackword(msg, uid, msg_id, cid):
             bot.send_message(msg.chat.id, f"Acción cancelada")
             bot.clear_step_handler_by_chat_id(uid)
 
+
+@bot.message_handler(commands=['set_bio'])
+def set_bio_command(message):
+    set_description(message)
 
 @bot.message_handler(commands=['afk'])
 def afk_command(message):
@@ -837,12 +844,15 @@ def handle_message(message):
 
                 # Configura tu clave de API de OpenAI
                 openai.api_key = OPENAI_TOKEN
-                prompt = f"Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo'. Teniendo en cuenta la siguiente información del usuario: "
+                prompt = f"Rol: Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo'. Teniendo en cuenta la siguiente información del usuario: "
 
                 # Texto de entrada que quieras completar o generar
-                input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}'] Responde el texto de user_message como si fueras Akira molesta porque no encuentras las cucharas. Esto con textos cortos con formato de mensaje de telegram siguiendo el rol."
+                input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}' mention: ['{mention}']] Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol."
                 # Llama a la API de OpenAI usando la función Completions de la biblioteca openai
-                print(input_text)
+
+                colorama.init()
+
+                print(Fore.BLUE + input_text)
                 try:
                     response = openai.Completion.create(
                         engine="text-davinci-003",
@@ -1046,6 +1056,7 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/start", "..."),
         telebot.types.BotCommand("/anime", "Buscar información sobre un anime"),
         telebot.types.BotCommand("/afk", "Modo afk"),
+        telebot.types.BotCommand("/set_bio", "Poner descripción"),
         telebot.types.BotCommand("/manga", "Buscar información sobre un manga"),
         telebot.types.BotCommand("/info", "Ver la información de un usuario"),
         telebot.types.BotCommand("/tr", "Traducir elementos"),
