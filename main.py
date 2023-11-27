@@ -37,6 +37,8 @@ from func.afk import set_afk
 from func.set_bio import set_description
 #Anime and manga gestion
 from func.add_anime import add_anime
+#Inline Query
+from func.inline_query import query_text
 #Admin Command
 from func.admin.warn import warn_user
 from func.admin.ban import ban_user
@@ -81,6 +83,12 @@ ROW_X_PAGE = int(os.getenv('ROW_X_PAGE'))
 
 
 bot = telebot.TeleBot(Token)
+
+#Inline Query
+@bot.inline_handler(lambda query: len(query.query) > 0)
+def catch_query(inline_query):
+    query_text(inline_query)
+
 
 @bot.callback_query_handler(func=lambda x: True)
 def respuesta_botones_inline(call):
