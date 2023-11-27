@@ -1,6 +1,5 @@
 import os
 import re
-import string
 import random
 import telebot
 import datetime
@@ -16,9 +15,6 @@ from telebot.apihelper import ApiTelegramException
 #Horarios
 import threading
 import time
-import pytz
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
 
 from telebot.types import InlineKeyboardMarkup
 from telebot.types import InlineKeyboardButton
@@ -65,9 +61,6 @@ def webhook():
         bot.process_new_updates([update])
         return "OK", 200
 
-# Obtiene una instancia de pytz para la zona horaria deseada
-tz = pytz.timezone('Cuba')
-
 #Conectarse a la base de datos MongoDB
 client = MongoClient('localhost', 27017)
 db = client.otakusenpai
@@ -95,34 +88,29 @@ def respuesta_botones_inline(call):
     u_name = call.from_user.username
 
 
-        #Game Paint
-    def is_valid_to_join(variable):
-        pattern = r"join_[a-zA-Z\d]{5}$"
-        return bool(re.match(pattern, variable))
-
-    if is_valid_to_join(call.data):
-        gartic_counter = Gartic.count_documents({})
-        if gartic_counter > 15:
-            bot.answer_callback_query(call.id, f"Ya dejen el abuso, es más, no hay mas pruebas hastas que despierte mi papá!")
-            return
-        partes = call.data.split("_")
-        code = partes[1]
-        bot.answer_callback_query(call.id, f"El codigo eh: {code}")
-        bot.send_message(call.from_user.id, f"Supuestamente te has unido a la sala: {code}")
-        bot.send_message(call.message.chat.id, f'El usuario <a href="tg://user?id={call.from_user.id}">{call.from_user.first_name}</a> se ha unido a la sala...', parse_mode="html", message_thread_id=call.message.message_thread_id)
-        Gartic.insert_one({ "prueba": "prueba" })
-        return
-    
-
+    #    #Game Paint
+    #def is_valid_to_join(variable):
+    #    pattern = r"join_[a-zA-Z\d]{5}$"
+    #    return bool(re.match(pattern, variable))
+    #if is_valid_to_join(call.data):
+    #    gartic_counter = Gartic.count_documents({})
+    #    if gartic_counter > 15:
+    #        bot.answer_callback_query(call.id, f"Ya dejen el abuso, es más, no hay mas pruebas hastas que despierte mi papá!")
+    #        return
+    #    partes = call.data.split("_")
+    #    code = partes[1]
+    #    bot.answer_callback_query(call.id, f"El codigo eh: {code}")
+    #    bot.send_message(call.from_user.id, f"Supuestamente te has unido a la sala: {code}")
+    #    bot.send_message(call.message.chat.id, f'El usuario <a href="tg://user?id={call.from_user.id}">{call.from_user.first_name}</a> se ha unido a la sala...', parse_mode="html", message_thread_id=call.message.message_thread_id)
+    #    Gartic.insert_one({ "prueba": "prueba" })
+    #    return
+    #
     chat_member = bot.get_chat_member(cid, uid)
     isadmin = isAdmin(uid)
 
     if chat_member.status not in ['administrator', 'creator']:
         if uid == 1221472021 or uid == 5579842331 or uid == 5174301596 or isadmin is not None:
             pass
-        elif uid == 5825765407:
-            bot.answer_callback_query(call.id, "MrLovro mi padre no te autoriza a usar triggers. JAJA XD efe por ti")
-            return
         else:
             bot.answer_callback_query(call.id, "Solo los administradores pueden usar este comando.")
             return
@@ -824,7 +812,8 @@ def handle_message(message):
                 if admin['user_id'] == user_id:
                     isAi = "Yes"
             user = users.find_one({"user_id": user_id})
-
+            if user is None:
+                user = {}
             isAki = user.get('isAki', None)
             user_info = user.get('description', None)
 
@@ -852,13 +841,24 @@ def handle_message(message):
                                 user = users.find_one({"username": user_name})
                                 descr = user.get('description', "None")
                                 mention = f"to_username: @{user_name}, description: '{descr}'"
+                reply = "None"
+                if message.reply_to_message:
+                    if message.reply_to_message.forum_topic_created is None:
+                        user_id = message.reply_to_message.from_user.id
+                        username = message.reply_to_message.from_user.username
+                        text = message.reply_to_message.text
+                        user = users.find_one({"user_id": user_id})
+                        if user is None:
+                            user = {}
+                        descr = user.get('description', "None")
+                        reply = f"to_username: @{username}, description: '{descr}'"
    
                 # Configura tu clave de API de OpenAI
                 openai.api_key = OPENAI_TOKEN
                 prompt = f"Rol: Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo'. Teniendo en cuenta la siguiente información del usuario: "
 
                 # Texto de entrada que quieras completar o generar
-                input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}' mention: ['{mention}']] Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol."
+                input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']] Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol."
                 # Llama a la API de OpenAI usando la función Completions de la biblioteca openai
 
                 colorama.init()
@@ -952,113 +952,6 @@ def handle_message(message):
         #    # Send the response to the group or supergroup
         #    bot.reply_to(message, response)
         
-
-
-
-
-
-#CONCURSO
-
-
-# Define una lista para almacenar los datos de los usuarios que están en el flujo de conversación
-users_in_flow = []
-
-def scheduled_task():
-    user_lst = []
-    for user in contest.find({'contest_num': 1}):
-                for sub in user['subscription']:
-                    user_lst.append(sub['user'])
-
-    for user_id in user_lst:
-        try:
-            bot.send_message(user_id, "Bien tienes 1 minuto para hallar la palabra magica y poderosa que @MarkyWTF ha seleccionado si lo conoces puede que la encuentres")
-        except ApiTelegramException as err:
-            print(err)
-
-    time.sleep(10)
-
-    for user_id in user_lst:
-        try:
-            msg = bot.send_message(user_id, "Listo, escribe la palabra mágica:")
-        except ApiTelegramException as err:
-            print(err)
-        # Registrar la siguiente función para manejar la respuesta
-        timer = threading.Timer(60.0, timeout_handler, args=[user_id])
-        timer.start()
-        users_in_flow.append({'user_id': user_id, 'timer': timer})
-        bot.register_next_step_handler(msg, prueba)
-
-def prueba(message):
-    if message.text is not None:
-        if message.text.lower() == "calvo":
-            msg = bot.send_message(message.from_user.id, "No ya no es esa...")
-            bot.register_next_step_handler(msg, prueba)
-        elif message.text.lower() != "mamawebo":
-            res = ["Jajaja no te acerques ni calentando", "Nooo, pero qué mal estás!", "¿Eso fue lo mejor que pudiste pensar?", "¡Ay, qué desastre!", "No, ni cerca. ¿En serio lo intentaste?", "¿Esa respuesta en serio?", "Jajaja, no te acerques ni por asomo.", "Esa respuesta es peor que el silencio.", "Qué lástima, esperaba más de ti.", "No, no, no. ¿Necesitas ayuda?", "¿Esa respuesta fue en serio o me estás troleando?", "¡No, no, no! ¿Dónde dejaste el cerebro?", "Si esa es tu mejor respuesta, mejor ni lo intentes."]
-            response = random.choice(res)
-            msg = bot.send_message(message.from_user.id, response)
-            bot.register_next_step_handler(msg, prueba)
-        else:
-            bot.send_message(message.from_user.id, f'Waaa has respondido bieeen!!! Le avisaré a todos')
-            clear_flow_by_user_id(message.chat.id)
-            for user in contest.find({'contest_num': 1}):
-                for sub in user['subscription']:
-                    try:
-                        bot.send_message(sub['user'], f'Eeeey @{message.from_user.username} ha respondido bieeeen!')
-                    except ApiTelegramException as err:
-                        print(err)
-    else:
-        bot.send_message(message.from_user.id, "Necesito Texto Textoooooo!!!")
-
-def timeout_handler(user_id):
-    # Enviar un mensaje de tiempo agotado y cancelar el flujo de conversación para este usuario
-    bot.send_message(user_id, 'Lo siento, se ha agotado el tiempo. Vuelve a intentarlo.')
-    clear_flow_by_user_id(user_id)
-
-def clear_timer_by_user_id(user_id):
-    # Buscar el temporizador correspondiente al usuario y cancelarlo
-    for user_data in users_in_flow:
-        if user_data['user_id'] == user_id:
-            user_data['timer'].cancel()
-            users_in_flow.remove(user_data)
-            break
-
-def clear_flow_by_user_id(user_id):
-    # Cancelar el flujo de conversación para el usuario y limpiar su temporizador
-    bot.clear_step_handler_by_chat_id(user_id)
-    clear_timer_by_user_id(user_id)
-
-
-def scheduled_task_1():
-    user_lst = []
-    for user in contest.find({'contest_num': 1}):
-                for sub in user['subscription']:
-                    username = users.find_one({"user_id" : sub['user']})
-                    try:
-                        chat_member = bot.get_chat_member(-1001485529816, username['user_id'])
-                    except ApiTelegramException as err:
-                        print(err)
-                    user_lst.append(f'<a href="tg://user?id={chat_member.user.id}">{chat_member.user.first_name}</a>')
-
-    mensaje = f"Atención:\n"
-    for username in user_lst:
-        mensaje+= f"🀄️ {username}\n"
-    mensaje+= f"\n⚠️El Concurso será el <code>Miercoles</code>.\n"
-
-    markup = telebot.types.InlineKeyboardMarkup()
-    btn = telebot.types.InlineKeyboardButton(text='🗳️ Subscribirse al Concurso',url="https://telegram.me/Akira_Senpai_bot?start=sub")
-    markup.add(btn)
-
-    bot.send_message(-1001485529816, mensaje, parse_mode="html", reply_markup=markup)
-
-# Crea una instancia de BackgroundScheduler
-scheduler = BackgroundScheduler()
-# Programa la tarea para que se ejecute cada hora CronTrigger(hour=22, minute=34, timezone=tz)
-scheduler.add_job(scheduled_task, CronTrigger(hour=23, minute=51, timezone=tz))
-scheduler.add_job(scheduled_task_1, CronTrigger(hour=23, minute=58, timezone=tz))
-
-# Inicia el scheduler
-scheduler.start()
 
 if __name__ == '__main__':
     ngrok_token = os.getenv('NGROK_TOKEN')
