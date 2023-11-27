@@ -35,6 +35,8 @@ from func.traduction import translate_command
 from func.akira_ai import get_permissions_ai
 from func.afk import set_afk
 from func.set_bio import set_description
+#Anime and manga gestion
+from func.add_anime import add_anime
 #Admin Command
 from func.admin.warn import warn_user
 from func.admin.ban import ban_user
@@ -392,6 +394,10 @@ def afk_command(message):
 def brb_command(message):
     set_afk(message)
 
+
+@bot.message_handler(commands=['add_anime'])
+def add_anime_command(message):
+    add_anime(message)
 
 @bot.message_handler(commands=['tr'])
 def tr_command(message):
