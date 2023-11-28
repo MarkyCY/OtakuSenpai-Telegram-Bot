@@ -99,3 +99,48 @@ def search_manga(name):
     
     return response.json()
 
+def searchCharacter(name):
+    query = '''
+    query ($search: String) {
+      Character(search: $search) {
+        name {
+          full
+          native
+        }
+        image {
+          large
+        }
+        description(asHtml: true)
+        gender
+        dateOfBirth {
+          year
+          month
+          day
+        }
+        age
+        bloodType
+        isFavourite
+        siteUrl
+      }
+    }
+    '''
+
+    variables = {
+        'search': name
+    }
+
+    #headers = {
+    #    'Authorization': f'Bearer {api_key}'
+    #}
+
+    # Envía la solicitud a la API de AniList
+    try:
+        response = requests.post(url, json={'query': query, 'variables': variables})
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as error:
+        print(f"Error al realizar la solicitud: {error}")
+    except requests.exceptions.RequestException as error:
+        print(f"Error de red: {error}")
+    
+    return response.json()

@@ -48,6 +48,7 @@ from func.admin.mute import mute_user
 #Api Anilist Use
 from func.anilist.search_manga import show_manga
 from func.anilist.search_anime import show_anime
+from func.anilist.search_character import show_character
 #Concurso
 from func.concurso.sub_user import subscribe_user
 #Evento
@@ -344,6 +345,10 @@ def anime(message):
 @bot.message_handler(commands=['manga'])
 def manga(message):
     show_manga(message)
+
+@bot.message_handler(commands=['character'])
+def character(message):
+    show_character(message)
 
 
 @bot.message_handler(commands=['sub'])
@@ -973,9 +978,10 @@ if __name__ == '__main__':
     bot.set_my_commands([
         telebot.types.BotCommand("/start", "..."),
         telebot.types.BotCommand("/anime", "Buscar información sobre un anime"),
+        telebot.types.BotCommand("/manga", "Buscar información sobre un manga"),
+        telebot.types.BotCommand("/character", "Buscar información sobre un personaje"),
         telebot.types.BotCommand("/afk", "Modo afk"),
         telebot.types.BotCommand("/set_bio", "Poner descripción"),
-        telebot.types.BotCommand("/manga", "Buscar información sobre un manga"),
         telebot.types.BotCommand("/info", "Ver la información de un usuario"),
         telebot.types.BotCommand("/tr", "Traducir elementos"),
         telebot.types.BotCommand("/triggers", "Gestión de los Triggers"),
