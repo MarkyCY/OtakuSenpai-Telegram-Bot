@@ -13,3 +13,4 @@ waitress
 openai
 deep-translator
 colorama
+html2text
