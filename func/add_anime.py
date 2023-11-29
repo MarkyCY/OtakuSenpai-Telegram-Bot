@@ -32,15 +32,21 @@ def add_anime(message):
                             topic_id = message.message_thread_id if message.is_topic_message else None
                             if topic_id and topic_id == 251973:
                                 text = f"Título: {args[1]} \nEnlace: https://t.me/{chat_username}/{topic_id}/{message_id}"
-                                print(f"Título: {args[1]} \nEnlace: https://t.me/{chat_username}/{topic_id}/{message_id}")
-                                try:
-                                    animes.insert_one({"title": args[1], "link": f"https://t.me/{chat_username}/{topic_id}/{message_id}"})
-                                except Exception as e:
-                                     bot.reply_to(message, f"Error al registrar anime en la base de datos: {e}")
+                                print(text)
+                                link = f"https://t.me/{chat_username}/{topic_id}/{message_id}"
+                                
+                                is_anime = animes.find_one({"link": link})
+                                if is_anime is None:
+                                    try:
+                                        animes.insert_one({"title": args[1], "link": link})
+                                    except Exception as e:
+                                         bot.reply_to(message, f"Error al registrar anime en la base de datos: {e}")
 
-                                msg = bot.reply_to(message, text)
-                                time.sleep(5)
-                                bot.delete_message(msg.chat.id, msg.message_id)
+                                    msg = bot.reply_to(message, text)
+                                    time.sleep(5)
+                                    bot.delete_message(msg.chat.id, msg.message_id)
+                                else:
+                                    bot.reply_to(message, "Este link ya fue registrado")
                             else:
                                 bot.reply_to(message, "Este comando solo puede ser usado en el tópico de <a href='https://t.me/OtakuSenpai2020/251973'>Anime</a>", parse_mode="HTML")
                         else:
