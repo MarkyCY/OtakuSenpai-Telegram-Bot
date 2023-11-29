@@ -28,11 +28,9 @@ def query_text(inline_query):
     results = []
     # Busca la consulta en los datos de las películas
     for anime in animes.find({'title': {'$regex': f'.*{str(inline_query.query)}.*', '$options': 'i'}}).limit(10):
-        print(anime)
         # Crea un resultado de consulta en línea para cada película que coincida
         text=f"⛩️{anime['title']} \n<a href='{anime['link']}'>👁️Ir a ver</a>"
         img="https://i.ibb.co/XXdjf7D/Photo-2023-11-24-08-52-37.jpg"
-        print(anime['title'])
         result = types.InlineQueryResultArticle(
             id=anime['title'],  # El primer argumento ahora es 'id', no 'titulo'
             thumbnail_url=img,
@@ -47,6 +45,5 @@ def query_text(inline_query):
             )
         )
         results.append(result)
-    print(results)
     # Responde a la consulta en línea con los resultados
     bot.answer_inline_query(inline_query.id, results)
