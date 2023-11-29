@@ -30,7 +30,7 @@ def query_text(inline_query):
     for anime in animes.find({'title': {'$regex': f'.*{str(inline_query.query)}.*', '$options': 'i'}}).limit(10):
         # Crea un resultado de consulta en línea para cada película que coincida
         text=f"⛩️{anime['title']} \n<a href='{anime['link']}'>👁️Ir a ver</a>"
-        img="https://cdn.myanimelist.net/s/common/userimages/a1e145b9-8aa0-4538-b365-51aa0a308562_225w?s=4e1e9b009b2035a9ab86669ab22f0091"
+        img="https://i.postimg.cc/Z5sHk6wJ/photo-2023-11-24-08-52-37.jpg"
         result = types.InlineQueryResultArticle(
             id=anime['title'],  # El primer argumento ahora es 'id', no 'titulo'
             thumbnail_url=img,
