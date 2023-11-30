@@ -35,7 +35,7 @@ from func.traduction import translate_command
 from func.akira_ai import get_permissions_ai
 from func.afk import set_afk
 from func.set_bio import set_description
-from func.add_poll import addPoll
+from func.add_poll import addPoll, write_num
 #Anime and manga gestion
 from func.add_anime import add_anime
 #Inline Query
