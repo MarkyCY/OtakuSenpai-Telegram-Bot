@@ -34,7 +34,7 @@ def query_text(inline_query):
         result = types.InlineQueryResultArticle(
             id=anime['title'],  # El primer argumento ahora es 'id', no 'titulo'
             thumbnail_url=img,
-            title=anime['title'],
+            title=f"Anime: {anime['title']}",
             #description=text,
             url=anime['link'],
             #caption=text,
