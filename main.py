@@ -35,7 +35,7 @@ from func.traduction import translate_command
 from func.akira_ai import get_permissions_ai
 from func.afk import set_afk
 from func.set_bio import set_description
-from func.add_poll import addPoll, write_num
+from func.add_poll import write_num
 #Anime and manga gestion
 from func.add_anime import add_anime
 #Inline Query
@@ -396,8 +396,37 @@ def catch_new_blackword(msg, uid, msg_id, cid):
             bot.clear_step_handler_by_chat_id(uid)
 
 @bot.message_handler(commands=['add_poll'])
-def add_poll_command(message):
-    addPoll(message)
+def addPoll(message):
+    # Función de recursividad para registrar la respuesta del usuario
+    cid = message.chat.id
+    uid = message.from_user.id
+
+    # Verificar si el mensaje es una respuesta y si es una encuesta
+    if message.reply_to_message and message.reply_to_message.poll:
+        poll_data = message.reply_to_message.poll
+        question = poll_data.question
+        options = poll_data.options
+
+        # Buscar la respuesta correcta en las opciones
+        correct_option_text = None
+        for option in options:
+            if option.voter_count == poll_data.correct_option_id:
+                correct_option_text = option.text
+                break
+
+        if cid != uid:
+            bot.reply_to(message, "Te escribí por Pv para que selecciones la respuesta correcta.")
+            
+        # Enviar la información al usuario
+        options_with_numbers = '\n'.join([f"{i+1}. {option.text}" for i, option in enumerate(options)])
+        response = f"Pregunta: {question}\nOpciones:{', '.join([option.text for option in options])}\nRespuesta Correcta: {correct_option_text}"
+        bot.send_message(message.chat.id, response)
+        #Steaps
+        msg = bot.send_message(uid, f"Ahora, escribe el número de la respuesta correcta:\n\n{options_with_numbers}")
+        bot.register_next_step_handler(msg, write_num, options_with_numbers)
+
+    else:
+        bot.reply_to(message, "Este comando solo funciona en respuesta a un mensaje de encuesta.")
 
 @bot.message_handler(commands=['set_bio'])
 def set_bio_command(message):
