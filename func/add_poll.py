@@ -16,6 +16,8 @@ Token = os.getenv('BOT_API')
 bot = telebot.TeleBot(Token)
 
 def write_num(message, options):
+        print(options)
+        print(len(options))
         if message.text is not None:
             try:
                 num = int(message.text)
