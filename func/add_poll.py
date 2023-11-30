@@ -29,7 +29,7 @@ def write_num(message, options):
                 msg = bot.send_message(message.from_user.id, "Ese número no está entre las opciones, inténtalo de nuevo:")
                 bot.register_next_step_handler(msg, write_num)
             else:
-                num = int(message.text) - 1
+                num = int(message.text)
                 # Registrar la respuesta del usuario
                 #users.update_one({'user_id': uid}, {'$set': {'contest.0.answer': num}})
                 bot.send_message(message.from_user.id, "¡Listo! Tu respuesta ha sido registrada.")

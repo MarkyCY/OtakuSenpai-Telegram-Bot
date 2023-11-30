@@ -418,12 +418,12 @@ def addPoll(message):
             bot.reply_to(message, "Te escribí por Pv para que selecciones la respuesta correcta.")
             
         # Enviar la información al usuario
-        options_with_numbers = '\n'.join([f"{i+1}. {option.text}" for i, option in enumerate(options)])
+        options_with_numbers = '\n'.join([f"{i}. {option.text}" for i, option in enumerate(options)])
         response = f"Pregunta: {question}\nOpciones:{', '.join([option.text for option in options])}\nRespuesta Correcta: {correct_option_text}"
         bot.send_message(message.chat.id, response)
         #Steaps
         msg = bot.send_message(uid, f"Ahora, escribe el número de la respuesta correcta:\n\n{options_with_numbers}")
-        bot.register_next_step_handler(msg, write_num, options_with_numbers)
+        bot.register_next_step_handler(msg, write_num, options)
 
     else:
         bot.reply_to(message, "Este comando solo funciona en respuesta a un mensaje de encuesta.")
