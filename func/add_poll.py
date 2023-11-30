@@ -21,11 +21,11 @@ def write_num(message, options):
                 num = int(message.text)
             except ValueError:
                 msg = bot.send_message(message.from_user.id, "Eso no es un número, inténtalo de nuevo:")
-                bot.register_next_step_handler(msg, write_num)
+                bot.register_next_step_handler(msg, write_num, options)
                 return
             if num > len(options):
                 msg = bot.send_message(message.from_user.id, "Ese número no está entre las opciones, inténtalo de nuevo:")
-                bot.register_next_step_handler(msg, write_num)
+                bot.register_next_step_handler(msg, write_num, options)
             else:
                 num = int(message.text)
                 # Registrar la respuesta del usuario
