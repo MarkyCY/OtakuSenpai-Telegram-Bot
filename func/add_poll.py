@@ -15,9 +15,7 @@ users = db.users
 Token = os.getenv('BOT_API')
 bot = telebot.TeleBot(Token)
 
-def addPoll(message):
-    # Función de recursividad para registrar la respuesta del usuario
-    def write_num(message, options):
+def write_num(message, options):
         if message.text is not None:
             try:
                 num = int(message.text)
@@ -33,7 +31,10 @@ def addPoll(message):
                 # Registrar la respuesta del usuario
                 #users.update_one({'user_id': uid}, {'$set': {'contest.0.answer': num}})
                 bot.send_message(message.from_user.id, "¡Listo! Tu respuesta ha sido registrada.")
+        
 
+def addPoll(message):
+    # Función de recursividad para registrar la respuesta del usuario
     cid = message.chat.id
     uid = message.from_user.id
 
