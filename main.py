@@ -35,6 +35,7 @@ from func.traduction import translate_command
 from func.akira_ai import get_permissions_ai
 from func.afk import set_afk
 from func.set_bio import set_description
+from func.add_poll import addPoll
 #Anime and manga gestion
 from func.add_anime import add_anime
 #Inline Query
@@ -394,6 +395,9 @@ def catch_new_blackword(msg, uid, msg_id, cid):
             bot.send_message(msg.chat.id, f"Acción cancelada")
             bot.clear_step_handler_by_chat_id(uid)
 
+@bot.message_handler(commands=['add_poll'])
+def add_poll_command(message):
+    addPoll(message)
 
 @bot.message_handler(commands=['set_bio'])
 def set_bio_command(message):
