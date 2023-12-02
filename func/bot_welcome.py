@@ -2,9 +2,15 @@ import telebot
 import os
 import random
 import datetime
+from pymongo import MongoClient
 
 from dotenv import load_dotenv
 load_dotenv()
+
+# Conectar a la base de datos
+client = MongoClient('localhost', 27017)
+db = client.otakusenpai
+users = db.users
 
 #Importamos los datos necesarios para el bot
 Token = os.getenv('BOT_API')
@@ -52,11 +58,30 @@ weekend_welcome_messages = [
     "¡Bienvenido! ¡Esperamos que te unas a nosotros para disfrutar juntos de este fin de semana!"
 ]
 
+monday_welcome_messages_christmas = [
+    "¡Bienvenido! ¡Casi Es Navidad!",
+    "¡Hola! ¡Bienvenido al grupo! ¡Es un buen día para unirse a nuestra comunidad! ¡Casi Es Navidad!",
+    "¡Yay! ¡Otro miembro se une a la diversión del fin de semana! Bienvenido al grupo. ¡Casi Es Navidad siiiii!",
+    "¡Buenas noticias! ¡Otro miembro acaba de unirse a nuestro grupo increíble! Bienvenido. ¡Casi estamos en Navidad!",
+    "¡Bienvenido! ¡Es genial tenerte aquí con nosotros en este fin de semana lleno de diversión! ¡Mira mi gorrito!",
+    "¡Otro miembro se une al grupo! ¡Bienvenido a nuestra familia del fin de semana! ¡Que gorrito mas lindo tengo!",
+    "¡Hola! ¡Bienvenido al grupo! ¡Espero que estés disfrutando de este fin de semana tanto como nosotros! ¡Casi Es Navidad!",
+    "¡Bienvenido! ¡Este es un lugar genial para pasar tu fin de semana! ¡Navidaaad, navidaaaaad!",
+    "¡Hola! ¡Bienvenido al grupo! ¡Espero que disfrutes de tu tiempo aquí durante este fin de semana! ¡Casi Es Navidad!",
+    "¡Bienvenido! ¡Esperamos que te unas a nosotros para disfrutar juntos de este fin de semana! ¡Ya quiero mi cerdo de 31 de diciembre!"
+]
+
 def send_welcome(message):
     # Obtenemos el nombre de usuario de la persona que se unio al grupo
     username = message.new_chat_members[0].username
+    id = message.new_chat_members[0].id
+    user = users.find_one({"user_id": id})
+    if user is None:
+        users.insert_one({"user_id": id, "username": username})
 
-    if datetime.datetime.today().weekday() == 0:
+    if datetime.datetime.today().month == 12 and datetime.datetime.today().weekday() == 0:
+        welcome_message = random.choice(monday_welcome_messages_christmas)
+    elif datetime.datetime.today().weekday() == 0:
         welcome_message = random.choice(monday_welcome_messages)
     elif datetime.datetime.today().weekday() >= 5:  # Si es fin de semana
         welcome_message = random.choice(weekend_welcome_messages)
