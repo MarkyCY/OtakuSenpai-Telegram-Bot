@@ -35,7 +35,6 @@ from func.traduction import translate_command
 from func.akira_ai import get_permissions_ai
 from func.afk import set_afk
 from func.set_bio import set_description
-from func import addPoll, write_num
 #Anime and manga gestion
 from func.add_anime import add_anime
 #Inline Query
@@ -395,9 +394,66 @@ def catch_new_blackword(msg, uid, msg_id, cid):
             bot.send_message(msg.chat.id, f"Acción cancelada")
             bot.clear_step_handler_by_chat_id(uid)
 
-@bot.message_handler(commands=['add_poll'])
+
+
+#@bot.message_handler(commands=['add_poll'])
+@bot.message_handler(content_types=['poll'])
 def command_add_poll(message):
-    addPoll(message)
+    if (message.chat.type == 'private'):
+        # Función de recursividad para registrar la respuesta del usuario
+        #cid = message.chat.id
+        uid = message.from_user.id
+
+        isadmin = isAdmin(uid)
+        if isadmin is not None:
+            poll_data = message.poll
+            
+            #Steaps
+            msg = bot.send_message(uid, f"¿Quieres agregar el poll? (si/no)")
+            bot.register_next_step_handler(msg, verify_add_poll, poll_data)
+            
+def verify_add_poll(message, poll_data, validate=False):
+    if message.text.lower() == "si" or validate is True:
+
+        options = poll_data.options
+            
+        options_with_numbers = '\n'.join([f"{i}. {option.text}" for i, option in enumerate(options)])
+
+        msg = bot.send_message(message.from_user.id, f"Escribe el número de la respuesta correcta:\n\n{options_with_numbers}")
+        bot.register_next_step_handler(msg, write_num, poll_data, options)
+    elif message.text.lower() == "no":
+        bot.send_message(message.from_user.id, "No se agregará el poll.")
+    else:
+        msg = bot.send_message(message.from_user.id, "Respuesta inválida. Por favor, responde con 'si' o 'no'.")
+        bot.register_next_step_handler(msg, verify_add_poll, poll_data)
+
+def write_num(message, poll_data, options):
+        if message.text is not None:
+            try:
+                num = int(message.text)
+            except ValueError:
+                msg = bot.send_message(message.from_user.id, "Eso no es un número, inténtalo de nuevo:")
+                bot.register_next_step_handler(msg, verify_add_poll, poll_data, True)
+                return
+            
+            if num > len(options):
+                msg = bot.send_message(message.from_user.id, "Ese número no está entre las opciones, inténtalo de nuevo:")
+                bot.register_next_step_handler(msg, verify_add_poll, poll_data, True)
+            else:
+                num = int(message.text)
+                pass
+
+        question = poll_data.question
+
+        # Enviar la información al usuario
+        print(options[num].text)
+        response = f"Pregunta: {question}\nOpciones:{', '.join([option.text for option in options])}\nRespuesta Correcta: {options[num].text}"
+        cooldown = 60
+
+        bot.send_message(message.chat.id, response)
+        time = "2023-11-24 12:02:00-05:00"
+        bot.send_message(message.chat.id, f"Agrega una fecha especifica para la salida del poll:\nFormato: <code>{time}</code>\n\n<code>2023-11-24</code>: Esta parte representa la fecha en formato año-mes-día. En este caso, la fecha es el 24 de noviembre de 2023.\n\n<code>12:02:00</code>: Esta parte representa la hora en formato hora:minuto:segundo. En este caso, la hora es las 12:02:00.\n\n<code>-05:00</code>: Esta parte representa el desplazamiento horario en formato +/-HH:MM. En este caso, el desplazamiento horario es de -05:00, lo que indica que la hora está en la zona horaria GMT-5.", parse_mode="html")
+
 
 @bot.message_handler(commands=['set_bio'])
 def set_bio_command(message):
@@ -827,7 +883,7 @@ def handle_message(message):
 
         #Akira AI
         msg = message.text.lower()
-        if msg is not None and msg.startswith("akira,"):
+        if msg is not None and (msg.startswith("akira,") or msg.startswith("aki,")):
             user_id = message.from_user.id
             isAi = None
             admins = Admins.find()
