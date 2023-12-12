@@ -452,6 +452,15 @@ def write_num(message, poll_data, options):
 
         bot.send_message(message.chat.id, response)
         time = "2023-11-24 12:02:00-05:00"
+        data = {
+            "question": question,
+            "options": [option.text for option in options],
+            "cooldown": cooldown,
+            "date": time
+            }
+
+        #json_data = json.dumps(data)
+        print(data)
         bot.send_message(message.chat.id, f"Agrega una fecha especifica para la salida del poll:\nFormato: <code>{time}</code>\n\n<code>2023-11-24</code>: Esta parte representa la fecha en formato año-mes-día. En este caso, la fecha es el 24 de noviembre de 2023.\n\n<code>12:02:00</code>: Esta parte representa la hora en formato hora:minuto:segundo. En este caso, la hora es las 12:02:00.\n\n<code>-05:00</code>: Esta parte representa el desplazamiento horario en formato +/-HH:MM. En este caso, el desplazamiento horario es de -05:00, lo que indica que la hora está en la zona horaria GMT-5.", parse_mode="html")
 
 
