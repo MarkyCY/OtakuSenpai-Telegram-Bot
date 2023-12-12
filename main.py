@@ -471,6 +471,8 @@ def endPollAdd(message, data):
         json_data = json.dumps(data)
         print(json_data)
         Tasks.insert_one(json_data)
+        bot.send_message(message.from_user.id, f"Se ha agregado la encuesta correctamente a la base de datos con la siguiente fecha:\n{data['date']}")
+
 
 @bot.message_handler(commands=['set_bio'])
 def set_bio_command(message):
