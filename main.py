@@ -953,7 +953,7 @@ def handle_message(message):
    
                 # Configura tu clave de API de OpenAI
                 openai.api_key = OPENAI_TOKEN
-                prompt = f"Rol: Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'. Casi es navidad, tenlo en cuenta. Teniendo en cuenta la siguiente información del usuario: "
+                prompt = f"Rol: Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'. Teniendo en cuenta la siguiente información del usuario: "
 
                 # Texto de entrada que quieras completar o generar
                 input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']] Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol."
