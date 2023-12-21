@@ -460,18 +460,22 @@ def write_num(message, poll_data, options):
             "cooldown": cooldown,
             }
         try:
-            msg = bot.send_message(message.from_user.id, f"Agrega una fecha especifica para la salida del poll:\nFormato: <code>{time}</code>\n\n<code>2023-11-24</code>: Esta parte representa la fecha en formato año-mes-día. En este caso, la fecha es el 24 de noviembre de 2023.\n\n<code>12:02:00</code>: Esta parte representa la hora en formato hora:minuto:segundo. En este caso, la hora es las 12:02:00.\n\n<code>-05:00</code>: Esta parte representa el desplazamiento horario en formato +/-HH:MM. En este caso, el desplazamiento horario es de -05:00, lo que indica que la hora está en la zona horaria GMT-5.", parse_mode="html")
+            msg = bot.send_message(message.from_user.id, f"Agrega una fecha especifica para la salida del poll:\nFormato: <code>{time}</code>\n\n<code>2023-11-24</code>: Esta parte representa la fecha en formato año-mes-día. En este caso, la fecha es el 24 de noviembre de 2023.\n\n<code>12:02:00</code>: Esta parte representa la hora en formato hora:minuto:segundo. En este caso, la hora es las 12:02:00.\n\n<code>-05:00</code>: Esta parte representa el desplazamiento horario en formato +/-HH:MM. En este caso, el desplazamiento horario es de -05:00, lo que indica que la hora está en la zona horaria GMT-5.\n⚠️Esta opción no debe ser modificada.", parse_mode="html")
             bot.register_next_step_handler(msg, endPollAdd, data)
         except ApiTelegramException as err:
             print(err)
 
 def endPollAdd(message, data):
-    if message.text:
+    pattern = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}-\d{2}:\d{2}"
+    if re.match(pattern, message.text):
         data["date"] = message.text
         json_data = json.dumps(data)
         print(json_data)
         Tasks.insert_one(json_data)
         bot.send_message(message.from_user.id, f"Se ha agregado la encuesta correctamente a la base de datos con la siguiente fecha:\n{data['date']}")
+    else:
+        msg = bot.send_message(message.from_user.id, f"Formato inválido, inténtalo de nuevo:")
+        bot.register_next_step_handler(msg, endPollAdd, data)
 
 
 @bot.message_handler(commands=['set_bio'])
