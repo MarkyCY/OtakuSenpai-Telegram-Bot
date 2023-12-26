@@ -10,7 +10,7 @@ six
 flask
 pyngrok
 waitress
-openai
+google-generativeai
 deep-translator
 colorama
 html2text
