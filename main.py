@@ -3,7 +3,7 @@ import re
 import random
 import telebot
 import datetime
-import openai
+import google.generativeai as genai
 
 from flask import Flask, request
 from pyngrok import ngrok, conf
@@ -31,6 +31,7 @@ from func.info import info
 from func.sticker import sticker_info
 from func.list_admins import list_admins, isAdmin
 from func.report import report
+from func.describe import describe
 from func.traduction import translate_command
 from func.akira_ai import get_permissions_ai
 from func.afk import set_afk
@@ -80,7 +81,9 @@ Tasks = db.tasks
 
 #VARIABLES GLOBALES .ENV
 Token = os.getenv('BOT_API')
-OPENAI_TOKEN = os.getenv('OPENAI_API')
+
+genai.configure(api_key=os.getenv('GEMINI_API'))
+model = genai.GenerativeModel('gemini-pro')
 
 ROW_X_PAGE = int(os.getenv('ROW_X_PAGE'))
 
@@ -121,12 +124,11 @@ def respuesta_botones_inline(call):
     chat_member = bot.get_chat_member(cid, uid)
     isadmin = isAdmin(uid)
 
-    if chat_member.status not in ['administrator', 'creator']:
-        if uid == 1221472021 or uid == 5579842331 or uid == 5174301596 or isadmin is not None:
-            pass
-        else:
-            bot.answer_callback_query(call.id, "Solo los administradores pueden usar este comando.")
-            return
+    ADMIN_IDS = {1221472021, 5579842331, 5174301596}
+
+    if chat_member.status not in ['administrator', 'creator'] and uid not in ADMIN_IDS and isadmin is None:
+        bot.answer_callback_query(call.id, "Solo los administradores pueden usar este comando.")
+        return
 
     datos = pickle.load(open(f'./data/{cid}_{mid}', 'rb'))
 
@@ -507,29 +509,30 @@ def tr_command(message):
 def akira_perm_ai(message):
     get_permissions_ai(message)
 
+@bot.message_handler(commands=['describe'])
+def describe_command(message):
+    describe(message)
+
 #Triggers
+ADMIN_IDS = [1221472021, 5579842331, 5174301596]
+
+def is_user_admin(user_id):
+    return user_id in ADMIN_IDS or isAdmin(user_id) is not None
+
 @bot.message_handler(commands=['triggers'])
 def command_triggers(message):
     user_id = message.from_user.id
     chat_id = message.chat.id
-    isadmin = isAdmin(user_id)
-    if user_id == 1221472021 or user_id == 5579842331 or user_id == 5174301596:
-        isadmin = "Yes"
-    if (message.chat.type == 'supergroup' or message.chat.type == 'group' or isadmin is not None):
+
+    if (message.chat.type in ['supergroup', 'group'] or is_user_admin(user_id)):
         chat_member = bot.get_chat_member(chat_id, user_id)
-        if chat_member.status not in ['administrator', 'creator']:
-            if isadmin is not None:
-                pass
-            else:
-                bot.reply_to(message, "Solo los administradores pueden usar este comando.")
-                return
+        if chat_member.status not in ['administrator', 'creator'] and not is_user_admin(user_id):
+            bot.reply_to(message, "Solo los administradores pueden usar este comando.")
+            return
 
         resul = Triggers.find()
-        trigger_list = [] # Declaramos una lista vacía para almacenar los triggers
-        for doc in resul:
-            trigger_list.append(doc) # Agregamos cada documento a la lista
+        trigger_list = [doc for doc in resul]  # Usamos comprensión de listas para simplificar el código
 
-        #bot.send_message(message.chat.id, texto, parse_mode="html")
         mostrar_pagina(trigger_list, message.chat.id, message.from_user.id, 0, None, message)
     else:
         bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
@@ -910,123 +913,91 @@ def handle_message(message):
 
         #Akira AI
         msg = message.text.lower()
-        if msg is not None and (msg.startswith("akira,") or msg.startswith("aki,")):
-            user_id = message.from_user.id
-            isAi = None
-            admins = Admins.find()
-            for admin in admins:
-                if admin['user_id'] == user_id:
-                    isAi = "Yes"
-            user = users.find_one({"user_id": user_id})
-            if user is None:
-                user = {}
-            isAki = user.get('isAki', None)
-            user_info = user.get('description', None)
+        if msg is None or (not msg.startswith("akira,") and not msg.startswith("aki,")):
+            return
+        isAi = None
+        user_id = message.from_user.id
+        isAi = "Yes" if any(admin['user_id'] == user_id for admin in Admins.find()) else None
+        user = users.find_one({"user_id": user_id})
+        isAki = user.get('isAki', None)
+        user_info = user.get('description', None)
+    
+        if isAki is not None:
+            isAi = "Yes"
 
-            if isAki is not None:
-                isAi = "Yes"
-                
-            if (message.chat.type == 'supergroup' or message.chat.type == 'group' or isAi is not None):
-                if isAi is not None:
-                    pass
-                else:
-                    bot.reply_to(message, "No eres digno de mis respuestas mortal!")
-                    return
-
-                if(len(message.text) > 80):
-                    bot.reply_to(message, "Demasiado texto! Me mareo 😵‍💫")
-                    return
-                
-                #Mention
-                mention = "None"
-                if hasattr(message, 'entities'):
-                    if message.entities is not None:
-                        for entity in message.entities:
-                            if entity.type == "mention":
-                                user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
-                                user = users.find_one({"username": user_name})
-                                descr = user.get('description', "None")
-                                mention = f"to_username: @{user_name}, description: '{descr}'"
-                reply = "None"
-                if message.reply_to_message:
-                    if message.reply_to_message.forum_topic_created is None:
-                        user_id = message.reply_to_message.from_user.id
-                        username = message.reply_to_message.from_user.username
-                        text = message.reply_to_message.text
-                        user = users.find_one({"user_id": user_id})
-                        if user is None:
-                            user = {}
-                        descr = user.get('description', "None")
-                        reply = f"to_username: @{username}, description: '{descr}'"
-   
-                # Configura tu clave de API de OpenAI
-                openai.api_key = OPENAI_TOKEN
-                prompt = f"Rol: Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'. Teniendo en cuenta la siguiente información del usuario: "
-
-                # Texto de entrada que quieras completar o generar
-                input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']] Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol."
-                # Llama a la API de OpenAI usando la función Completions de la biblioteca openai
-
-                colorama.init()
-
-                print(Fore.BLUE + input_text)
-                try:
-                    response = openai.Completion.create(
-                        engine="text-davinci-003",
-                        prompt=input_text,
-                        max_tokens=150
-                    )
-                except Exception as e:
-                    print(f"An error occurred: {e}")
-                    return
-                # Obtiene el texto generado de la respuesta
-                generated_text = response.choices[0].text
-                bot.send_chat_action(message.chat.id, 'typing')
-                time.sleep(3)
-                # Hacer algo con el texto generado, por ejemplo, imprimirlo
-                bot.reply_to(message, generated_text, parse_mode='HTML')
-       
-       
-       
+    
+        if message.chat.type not in ['supergroup', 'group'] or isAi is None:
+            bot.reply_to(message, "No eres digno de mis respuestas mortal!")
+            return
+    
+        if len(message.text) > 80:
+            bot.reply_to(message, "Demasiado texto! Me mareo 😵‍💫")
+            return
+    
+        mention = "None"
+        if hasattr(message, 'entities') and message.entities is not None:
+            for entity in message.entities:
+                if entity.type == "mention":
+                    user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
+                    user = users.find_one({"username": user_name}) or {}
+                    descr = user.get('description', "None")
+                    mention = f"to_username: @{user_name}, description: '{descr}'"
+    
+        reply = "None"
+        if message.reply_to_message and message.reply_to_message.forum_topic_created is None:
+            user_id = message.reply_to_message.from_user.id
+            username = message.reply_to_message.from_user.username
+            #text = message.reply_to_message.text
+            user = users.find_one({"user_id": user_id}) or {}
+            descr = user.get('description', "None")
+            reply = f"to_username: @{username}, description: '{descr}'"
+            
+        prompt = f"Rol: Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'. Teniendo en cuenta la siguiente información del usuario: "
+        input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']] Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol con respuestas naturales y devuelve un texto limpio sin nada que arruine el rol."
+        
+        colorama.init()
+        print(Fore.BLUE + input_text)
+    
+        try:
+            response = model.generate_content(input_text)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return
+    
+        bot.send_chat_action(message.chat.id, 'typing')
+        time.sleep(3)
+        bot.reply_to(message, response.text, parse_mode='HTML')
+           
+           
         #AKF
-        if message.reply_to_message:
-            if message.reply_to_message.forum_topic_created is None:
-                user_id = message.reply_to_message.from_user.id
-                fst_name = message.reply_to_message.from_user.first_name
-                userc_id = message.reply_to_message.chat.id
-                #'forum_topic_created': None
-                user = users.find_one({"user_id": user_id})
-                if user is not None and "is_afk" in user:
-                    if not user["reason"]:
-                        if int(userc_id) == int(user_id):
-                            return
-                        res = f"<b>{fst_name}</b> está AFK"
-                        bot.reply_to(message, res, parse_mode='HTML')
-                    else:
-                        if int(userc_id) == int(user_id):
-                            return
-                        res = f"<b>{fst_name}</b> está AFK.\nRazón: {user['reason']}"
-                        bot.reply_to(message, res, parse_mode='HTML')
-
+        if message.reply_to_message and message.reply_to_message.forum_topic_created is None:
+            user_id = message.reply_to_message.from_user.id
+            fst_name = message.reply_to_message.from_user.first_name
+            userc_id = message.reply_to_message.chat.id
+            user = users.find_one({"user_id": user_id})
+        
+            if user is not None and "is_afk" in user and int(userc_id) != int(user_id):
+                res = f"<b>{fst_name}</b> está AFK"
+                if user["reason"]:
+                    res += f".\nRazón: {user['reason']}"
+                bot.reply_to(message, res, parse_mode='HTML')
+        
         # Detectar si el mensaje contiene el @username del cliente
-        if hasattr(message, 'entities'):
-            if message.entities is not None:
-                for entity in message.entities:
-                    if entity.type == "mention":
-                        user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
-                        #if check_afk(user_name):
-                        #    bot.reply_to(message, "El usuario está AFK")
-                        user = users.find_one({"username": user_name})
-                        if user is not None:
-                            user_id = user.get('user_id', None)
-                            user_get = bot.get_chat(user_id)
-                            if user is not None and "is_afk" in user:
-                                if not user["reason"]:
-                                    res = f"<b>{user_get.first_name}</b> está AFK"
-                                    bot.reply_to(message, res, parse_mode='HTML')
-                                else:
-                                    res = f"<b>{user_get.first_name}</b> está AFK.\nRazón: {user['reason']}"
-                                    bot.reply_to(message, res, parse_mode='HTML')
+        if hasattr(message, 'entities') and message.entities is not None:
+            for entity in message.entities:
+                if entity.type == "mention":
+                    user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
+                    user = users.find_one({"username": user_name})
+        
+                    if user is not None:
+                        user_id = user.get('user_id', None)
+                        user_get = bot.get_chat(user_id)
+        
+                        if "is_afk" in user:
+                            res = f"<b>{user_get.first_name}</b> está AFK"
+                            if user["reason"]:
+                                res += f".\nRazón: {user['reason']}"
+                            bot.reply_to(message, res, parse_mode='HTML')
     
         #Revisar si está afk
         user_id = message.from_user.id
@@ -1084,18 +1055,18 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/unmute", "Desmutear a un Usuario"),
         telebot.types.BotCommand("/sub", "Subscribirse al concurso")
     ])
-    #bot.remove_webhook()
-    #time.sleep(1)
-    #print('Iniciando el Bot')
-    #bot.infinity_polling()
-    conf.get_default().config_path = "./config_ngrok.yml"
-    conf.get_default().region = "us"
-    ngrok.set_auth_token(ngrok_token)
-    ngrok_tunel = ngrok.connect(5000, bind_tls=True)
-    ngrok_url = ngrok_tunel.public_url
-    print("URL NGROK: ", ngrok_url)
     bot.remove_webhook()
     time.sleep(1)
-    bot.set_webhook(url=ngrok_url)
-    #web_server.run(host="0.0.0.0", port=5000)
-    serve(web_server, host="0.0.0.0", port=5000)
+    print('Iniciando el Bot')
+    bot.infinity_polling()
+    #conf.get_default().config_path = "./config_ngrok.yml"
+    #conf.get_default().region = "us"
+    #ngrok.set_auth_token(ngrok_token)
+    #ngrok_tunel = ngrok.connect(5000, bind_tls=True)
+    #ngrok_url = ngrok_tunel.public_url
+    #print("URL NGROK: ", ngrok_url)
+    #bot.remove_webhook()
+    #time.sleep(1)
+    #bot.set_webhook(url=ngrok_url)
+    ##web_server.run(host="0.0.0.0", port=5000)
+    #serve(web_server, host="0.0.0.0", port=5000)
