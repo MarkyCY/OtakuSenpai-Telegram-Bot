@@ -45,7 +45,10 @@ def get_permissions_ai(message):
     if user is None:
         users.insert_one({"user_id": user_id, "username": username})
 
-    isAki = user.get('isAki', None)
+    if user is not None:
+        isAki = user.get('isAki', None)
+    else:
+        isAki = None
     print(user)
     print(isAki)
 
