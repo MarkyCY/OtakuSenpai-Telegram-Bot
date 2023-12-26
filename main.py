@@ -28,7 +28,7 @@ from func.blacklist.blacklist import *
 #Other Command
 from func.bot_welcome import send_welcome
 from func.info import info
-from func.sticker_info import sticker_info
+from func.sticker import sticker_info
 from func.list_admins import list_admins, isAdmin
 from func.report import report
 from func.traduction import translate_command
@@ -684,7 +684,7 @@ def catch_new_trigger(msg, uid, msg_id, cid):
     if msg.from_user.id == uid:
         if msg.text is not None:
             trigger = msg.text
-            msg = bot.send_message(msg.chat.id, f"Listo el trigger\n<code>{msg.text}</code>\nse añadió correctamente.\n Escriba el texto de este sticker:", parse_mode="html")
+            msg = bot.send_message(msg.chat.id, f"Listo el trigger\n<code>{msg.text}</code>\nse añadió correctamente.\n Escriba el texto de este trigger:", parse_mode="html")
             bot.register_next_step_handler(msg, catch_new_text_trigger, uid, trigger, msg_id, cid)
         else:
             bot.send_message(msg.chat.id, f"Acción cancelada")
