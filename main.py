@@ -36,7 +36,7 @@ from func.akira_ai import get_permissions_ai
 from func.afk import set_afk
 from func.set_bio import set_description
 #Anime and manga gestion
-from func.add_anime import add_anime
+from func.anime import *
 #Inline Query
 from func.inline_query import query_text
 #Admin Command
@@ -494,6 +494,10 @@ def brb_command(message):
 @bot.message_handler(commands=['add_anime'])
 def add_anime_command(message):
     add_anime(message)
+
+@bot.message_handler(commands=['del_anime'])
+def del_anime_command(message):
+    del_anime(message)
 
 @bot.message_handler(commands=['tr'])
 def tr_command(message):
@@ -1069,6 +1073,8 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/tr", "Traducir elementos"),
         telebot.types.BotCommand("/triggers", "Gestión de los Triggers"),
         telebot.types.BotCommand("/perm_ai", "Permitir IA"),
+        telebot.types.BotCommand("/add_anime", "Agregar anime a la base de datos"),
+        telebot.types.BotCommand("/del_anime", "Eliminar anime a la base de datos"),
         telebot.types.BotCommand("/blacklist", "Gestión de la lista negra"),
         telebot.types.BotCommand("/list_admins", "Listado de Administradores"),
         telebot.types.BotCommand("/ban", "Banear a un Usuario"),
