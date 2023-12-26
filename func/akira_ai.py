@@ -19,37 +19,45 @@ def get_permissions_ai(message):
     user_id = message.from_user.id
     chat_id = message.chat.id
     username = message.from_user.username
-    if(message.chat.type == 'supergroup' or message.chat.type == 'group'):
-        chat_member = bot.get_chat_member(chat_id, user_id)
-        if chat_member.status in ['administrator', 'creator']:
-            if message.reply_to_message:
-                if user_id == 873919300:
-                    user_id = message.reply_to_message.from_user.id
-                    username = message.reply_to_message.from_user.username
-    
-                    user = users.find_one({"user_id": user_id})
-                    if user is None:
-                        users.insert_one({"user_id": user_id, "username": username})
-                    isAki = user.get('isAki', None)
-                    print(user)
-                    print(isAki)
-                    if isAki is not None:
-                        try:
-                            users.update_one({"user_id": user_id}, {"$unset": {"isAki": ""}})
-                        except Exception as e:
-                            print(f"An error occurred: {e}")
-                        bot.reply_to(message.reply_to_message, "Te quitaron los permisos buajaja!")
-                    else:
-                        try:
-                            users.update_one({"user_id": user_id}, {"$set": {"isAki": True}})
-                        except Exception as e:
-                            print(f"An error occurred: {e}")
-                        bot.reply_to(message.reply_to_message, "Wiii ya puedes hablar conmigo!")
-                else:
-                    bot.reply_to(message, "Solo mi padre puede usar ese comando por ahora :(")
-            else:
-                bot.reply_to(message, "Debe hacer reply al sujeto.")
-        else:
-            bot.reply_to(message, "Solo los administradores pueden usar este comando.")
-    else:
+
+    if message.chat.type not in ['supergroup', 'group']:
         bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
+        return
+
+    chat_member = bot.get_chat_member(chat_id, user_id)
+
+    if chat_member.status not in ['administrator', 'creator']:
+        bot.reply_to(message, "Solo los administradores pueden usar este comando.")
+        return
+
+    if not message.reply_to_message:
+        bot.reply_to(message, "Debe hacer reply al sujeto.")
+        return
+
+    if user_id != 873919300:
+        bot.reply_to(message, "Solo mi padre puede usar ese comando por ahora :(")
+        return
+
+    user_id = message.reply_to_message.from_user.id
+    username = message.reply_to_message.from_user.username
+
+    user = users.find_one({"user_id": user_id})
+    if user is None:
+        users.insert_one({"user_id": user_id, "username": username})
+
+    isAki = user.get('isAki', None)
+    print(user)
+    print(isAki)
+
+    if isAki is not None:
+        try:
+            users.update_one({"user_id": user_id}, {"$unset": {"isAki": ""}})
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        bot.reply_to(message.reply_to_message, "Te quitaron los permisos buajaja!")
+    else:
+        try:
+            users.update_one({"user_id": user_id}, {"$set": {"isAki": True}})
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        bot.reply_to(message.reply_to_message, "Wiii ya puedes hablar conmigo!")

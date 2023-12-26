@@ -1,7 +1,7 @@
 import telebot
 import os
 import random
-import datetime
+from datetime import datetime
 from pymongo import MongoClient
 
 from dotenv import load_dotenv
@@ -71,19 +71,28 @@ monday_welcome_messages_christmas = [
     "¡Bienvenido! ¡Esperamos que te unas a nosotros para disfrutar juntos de este fin de semana! ¡Ya quiero mi cerdo de 31 de diciembre!"
 ]
 
+# Constantes
+DECEMBER = 12
+MONDAY = 0
+WEEKEND_START = 5
+
 def send_welcome(message):
     # Obtenemos el nombre de usuario de la persona que se unio al grupo
-    username = message.new_chat_members[0].username
-    id = message.new_chat_members[0].id
-    user = users.find_one({"user_id": id})
+    new_user_username = message.new_chat_members[0].username
+    new_user_id = message.new_chat_members[0].id
+    user = users.find_one({"user_id": new_user_id})
     if user is None:
-        users.insert_one({"user_id": id, "username": username})
+        users.insert_one({"user_id": new_user_id, "username": new_user_username})
 
-    if datetime.datetime.today().month == 12 and datetime.datetime.today().weekday() == 0:
+    current_date = datetime.today()
+    current_month = current_date.month
+    current_weekday = current_date.weekday()
+
+    if current_month == DECEMBER and current_weekday == MONDAY:
         welcome_message = random.choice(monday_welcome_messages_christmas)
-    elif datetime.datetime.today().weekday() == 0:
+    elif current_weekday == MONDAY:
         welcome_message = random.choice(monday_welcome_messages)
-    elif datetime.datetime.today().weekday() >= 5:  # Si es fin de semana
+    elif current_weekday >= WEEKEND_START:  # Si es fin de semana
         welcome_message = random.choice(weekend_welcome_messages)
     else:
         welcome_message = random.choice(default_welcome_messages)

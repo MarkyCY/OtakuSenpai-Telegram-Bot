@@ -19,27 +19,29 @@ def set_description(message):
     user_id = message.from_user.id
     chat_id = message.chat.id
     args = message.text.split(None, 1)
-    if(message.chat.type == 'supergroup' or message.chat.type == 'group'):
-        chat_member = bot.get_chat_member(chat_id, user_id)
-        #if chat_member.status in ['administrator', 'creator']:
-        if message.reply_to_message:
-            if len(args) >= 2:
-                if user_id == 873919300 or user_id == 5579842331 or user_id == 1881435398 or user_id == 6811585914:
-                    description = args[1]
-                    username = message.reply_to_message.from_user.username
-                    if len(description) > 100:
-                        description = description[:100]
-                        notice = "\nSu motivo de afk se redujo a 100 caracteres."
-                    user_id = message.reply_to_message.from_user.id
-                    users.update_one({"user_id": user_id}, {"$set": {"username": username, "description": description}}, upsert=True)
-                    bot.reply_to(message.reply_to_message, "Descripción actualizada correctamente.")
-                else:
-                    bot.reply_to(message, "Solo mi padre puede usar ese comando por ahora :(")
-            else:
-                bot.reply_to(message, "Proporcionar una descripción para el usuario.")
-        else:
-            bot.reply_to(message, "Debe hacer reply para este comando.")
-        #else:
-            #bot.reply_to(message, "Solo los administradores pueden usar este comando.")
-    else:
+
+    if message.chat.type not in ['supergroup', 'group']:
         bot.send_message(message.chat.id, f"Este comando solo puede ser usado en grupos y en supergrupos")
+        return
+
+    if not message.reply_to_message:
+        bot.reply_to(message, "Debe hacer reply para este comando.")
+        return
+
+    if len(args) < 2:
+        bot.reply_to(message, "Proporcionar una descripción para el usuario.")
+        return
+
+    if user_id not in [873919300, 5579842331, 1881435398, 6811585914]:
+        bot.reply_to(message, "Solo mi padre puede usar ese comando por ahora :(")
+        return
+
+    description = args[1]
+    username = message.reply_to_message.from_user.username
+    if len(description) > 100:
+        description = description[:100]
+        notice = "\nSu motivo de afk se redujo a 100 caracteres."
+
+    user_id = message.reply_to_message.from_user.id
+    users.update_one({"user_id": user_id}, {"$set": {"username": username, "description": description}}, upsert=True)
+    bot.reply_to(message.reply_to_message, "Descripción actualizada correctamente.")
