@@ -19,7 +19,7 @@ def list_admins(message):
     if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
         # obtén la información del chat
         chat_id = message.chat.id
-        chat_info = bot.get_chat(chat_id)
+        #chat_info = bot.get_chat(chat_id)
         # obtén la lista de administradores del chat
         admins = bot.get_chat_administrators(chat_id)
 
@@ -33,8 +33,8 @@ def list_admins(message):
             elif not admin.user.is_bot:
                 other_admins.append(admin)
                 # guarda el administrador en la base de datos si no existe
-                if chat_admins.find_one({"user_id": admin.user.id}) is None:
-                    chat_admins.insert_one({"user_id": admin.user.id, "username": admin.user.username})
+                #if chat_admins.find_one({"user_id": admin.user.id}) is None:
+                #    chat_admins.insert_one({"user_id": admin.user.id, "username": admin.user.username})
 
         # envía un mensaje con la lista de administradores al chat
         message_text = f"👑Propietario:\n└ <a href='https://t.me/{owner.user.username}'>{owner.user.username} > {owner.custom_title}</a>\n\n⚜️ Administradores:"
