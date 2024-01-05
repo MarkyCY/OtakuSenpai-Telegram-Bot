@@ -34,6 +34,7 @@ from func.report import report
 from func.describe import describe
 from func.traduction import translate_command
 from func.akira_ai import get_permissions_ai
+from func.reverse import reverse
 from func.afk import set_afk
 from func.set_bio import set_description
 #Anime and manga gestion
@@ -505,6 +506,10 @@ def del_anime_command(message):
 def tr_command(message):
     translate_command(message)
 
+@bot.message_handler(commands=['reverse'])
+def reverse_command(message):
+    reverse(message)
+
 @bot.message_handler(commands=['perm_ai'])
 def akira_perm_ai(message):
     get_permissions_ai(message)
@@ -952,8 +957,11 @@ def handle_message(message):
             descr = user.get('description', "None")
             reply = f"to_username: @{username}, description: '{descr}'"
             
-        prompt = f"Rol: Eres Akira, la hija de @MarkyWTF, un dios piña que es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'. Teniendo en cuenta la siguiente información del usuario: "
-        input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']] Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol con respuestas naturales y devuelve un texto limpio sin nada que arruine el rol."
+        prompt = f"""
+    [Rol] Eres Akira, la hija de @MarkyWTF el cual es un dios piña y a la vez tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'.
+    Teniendo en cuenta la siguiente información del usuario: 
+    """
+        input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']]Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol con respuestas naturales y devuelve un texto limpio sin nada que arruine el rol."
         
         colorama.init()
         print(Fore.BLUE + input_text)
@@ -1032,7 +1040,7 @@ def handle_message(message):
 
 if __name__ == '__main__':
     ngrok_token = os.getenv('NGROK_TOKEN')
-    
+
     bot.set_my_commands([
         telebot.types.BotCommand("/start", "..."),
         telebot.types.BotCommand("/anime", "Buscar información sobre un anime"),
@@ -1044,6 +1052,8 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/tr", "Traducir elementos"),
         telebot.types.BotCommand("/triggers", "Gestión de los Triggers"),
         telebot.types.BotCommand("/perm_ai", "Permitir IA"),
+        telebot.types.BotCommand("/describe", "Analizar imagen"),
+        telebot.types.BotCommand("/reverse", "Buscar personaje"),
         telebot.types.BotCommand("/add_anime", "Agregar anime a la base de datos"),
         telebot.types.BotCommand("/del_anime", "Eliminar anime a la base de datos"),
         telebot.types.BotCommand("/blacklist", "Gestión de la lista negra"),
