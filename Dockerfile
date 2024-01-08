@@ -1,6 +1,9 @@
 # Usa una imagen base de Python
 FROM python:3.12.1
 
+# Instala screen
+RUN apt-get update && apt-get install -y screen
+
 # Establece el directorio de trabajo
 WORKDIR /app
 
@@ -14,4 +17,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install Pillow
 
 # Define el comando predeterminado que se ejecutará cuando el contenedor se inicie
-CMD ["python", "main.py"]
+CMD screen -dmS aki python main.py
