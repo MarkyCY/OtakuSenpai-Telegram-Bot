@@ -24,7 +24,7 @@ def describe(message):
     user_id = message.from_user.id
     chat_member = bot.get_chat_member(chat_id, message.from_user.id)
 
-    if chat_id != -1001485529816:
+    if chat_id != -1001485529816 and message.from_user.id != 873919300:
         bot.reply_to(message, "Este comando es exclusivo de Otaku Senpai.")
         return
 

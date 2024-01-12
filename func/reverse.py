@@ -24,7 +24,7 @@ bot = telebot.TeleBot(Token)
 def reverse(message):
     chat_id = message.chat.id
     
-    if chat_id != -1001485529816:
+    if chat_id != -1001485529816 and message.from_user.id != 873919300:
         bot.reply_to(message, "Este comando es exclusivo de Otaku Senpai.")
         return
     
