@@ -962,6 +962,7 @@ def handle_message(message):
                 if entity.type == "mention":
                     user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
                     user = users.find_one({"username": user_name})
+                    print(user)
                     descr = user.get('description', "None")
                     mention = f"to_username: @{user_name}, description: '{descr}'"
     
