@@ -71,7 +71,6 @@ def reverse(message):
             
         if characters is not None:
             text = f"**Búsqueda: {characters}**\n**Fuente: {source}**"
-            bot.reply_to(message, "No se encontraron personajes en la respuesta de la API.")
             reaction = ReactionTypeEmoji(type="emoji", emoji="⚡")
             bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
             bot.reply_to(message, text, parse_mode="Markdown")
