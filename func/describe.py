@@ -28,9 +28,9 @@ def describe(message):
         bot.reply_to(message, "Este comando es exclusivo de Otaku Senpai.")
         return
 
-    if chat_member.status not in ['administrator', 'creator'] and not any(admin['user_id'] == user_id for admin in Admins.find()):
-        bot.reply_to(message, "Solo los administradores pueden usar este comando.")
-        return
+    #if chat_member.status not in ['administrator', 'creator'] and not any(admin['user_id'] == user_id for admin in Admins.find()):
+    #    bot.reply_to(message, "Solo los administradores pueden usar este comando.")
+    #    return
     
     if not message.reply_to_message or not message.reply_to_message.photo:
         bot.send_message(message.chat.id, f"Debes hacer reply a una imagen para poder describirla")
