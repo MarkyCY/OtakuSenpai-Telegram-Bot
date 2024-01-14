@@ -333,46 +333,55 @@ def on_chat_member_updated(message):
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    cid = message.chat.id
     bot.send_message(message.chat.id, "Hola para subscribirte en el concurso solo escribe o toca: /sub")
     print(message.from_user.username)
 
 
 @bot.message_handler(commands=['info'])
 def command_info(message):
+    cid = message.chat.id
     info(message)
     
 
 @bot.message_handler(commands=['anime'])
 def anime(message):
+    cid = message.chat.id
     show_anime(message)
 
 
 @bot.message_handler(commands=['manga'])
 def manga(message):
+    cid = message.chat.id
     show_manga(message)
 
 @bot.message_handler(commands=['character'])
 def character(message):
+    cid = message.chat.id
     show_character(message)
 
 
 @bot.message_handler(commands=['sub'])
 def command_to_subscribe(message):
+    cid = message.chat.id
     subscribe_user(message)
 
 
 @bot.message_handler(commands=['list_admins'])
 def command_list_admins(message):
+    cid = message.chat.id
     list_admins(message)
     
 
 @bot.message_handler(commands=['report'])
 def command_report(message):
+    cid = message.chat.id
     report(message)
 
 
 @bot.message_handler(commands=['blacklist'])
 def command_blackwords(message):
+    cid = message.chat.id
     blacklist(message)
 
 def add_blackword(cid, uid, msg_id):
@@ -483,10 +492,12 @@ def endPollAdd(message, data):
 
 @bot.message_handler(commands=['set_bio'])
 def set_bio_command(message):
+    cid = message.chat.id
     set_description(message)
 
 @bot.message_handler(commands=['afk'])
 def afk_command(message):
+    cid = message.chat.id
     set_afk(message)
 
 @bot.message_handler(func=lambda message: message.text.lower().startswith('brb') or message.text.lower().startswith('brb '))
@@ -496,26 +507,32 @@ def brb_command(message):
 
 @bot.message_handler(commands=['add_anime'])
 def add_anime_command(message):
+    cid = message.chat.id
     add_anime(message)
 
 @bot.message_handler(commands=['del_anime'])
 def del_anime_command(message):
+    cid = message.chat.id
     del_anime(message)
 
 @bot.message_handler(commands=['tr'])
 def tr_command(message):
+    cid = message.chat.id
     translate_command(message)
 
 @bot.message_handler(commands=['reverse'])
 def reverse_command(message):
+    cid = message.chat.id
     reverse(message)
 
 @bot.message_handler(commands=['perm_ai'])
 def akira_perm_ai(message):
+    cid = message.chat.id
     get_permissions_ai(message)
 
 @bot.message_handler(commands=['describe'])
 def describe_command(message):
+    cid = message.chat.id
     describe(message)
 
 #Triggers
