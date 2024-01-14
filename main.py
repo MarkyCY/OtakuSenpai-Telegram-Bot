@@ -961,7 +961,7 @@ def handle_message(message):
             for entity in message.entities:
                 if entity.type == "mention":
                     user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
-                    user = users.find_one({"username": user_name}) or {}
+                    user = users.find_one({"username": user_name})
                     descr = user.get('description', "None")
                     mention = f"to_username: @{user_name}, description: '{descr}'"
     
@@ -970,7 +970,7 @@ def handle_message(message):
             user_id = message.reply_to_message.from_user.id
             username = message.reply_to_message.from_user.username
             #text = message.reply_to_message.text
-            user = users.find_one({"user_id": user_id}) or {}
+            user = users.find_one({"user_id": user_id})
             descr = user.get('description', "None")
             reply = f"to_username: @{username}, description: '{descr}'"
             
