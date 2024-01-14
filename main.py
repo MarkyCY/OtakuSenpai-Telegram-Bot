@@ -974,7 +974,12 @@ def handle_message(message):
     
         bot.send_chat_action(message.chat.id, 'typing')
         time.sleep(3)
-        bot.reply_to(message, response.text, parse_mode='HTML')
+        print(response.text)
+        try:
+            bot.reply_to(message, response.text, parse_mode='HTML')
+        except ApiTelegramException as err:
+            print(err)
+        
            
            
         #AKF
