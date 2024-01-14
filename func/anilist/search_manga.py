@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from func.api_anilist import search_manga
 from deep_translator import GoogleTranslator
+from telebot.types import ReactionTypeEmoji
 import requests
 import re
 import telebot
@@ -29,6 +30,9 @@ def show_manga(message):
         manga_name = " ".join(referral_all[1:])
         manga = search_manga(manga_name)
         if 'errors' in manga:
+            reaction = ReactionTypeEmoji(type="emoji", emoji="🤷‍♀")
+            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
+
             for error in manga['errors']:
                 match error['message']:
                     case "Not Found.":
@@ -36,6 +40,9 @@ def show_manga(message):
                     case _:
                         bot.send_message(message.chat.id, error['message'])
         else:
+            reaction = ReactionTypeEmoji(type="emoji", emoji="⚡")
+            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
+
             name = manga['data']['Media']['title']['english']
             if (name is None):
                 name = manga['data']['Media']['title']['romaji']

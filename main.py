@@ -18,6 +18,7 @@ import time
 
 from telebot.types import InlineKeyboardMarkup
 from telebot.types import InlineKeyboardButton
+from telebot.types import ReactionTypeEmoji
 import pickle
 from bson import ObjectId
 
@@ -340,48 +341,48 @@ def start(message):
 
 @bot.message_handler(commands=['info'])
 def command_info(message):
-    cid = message.chat.id
     info(message)
     
 
 @bot.message_handler(commands=['anime'])
 def anime(message):
-    cid = message.chat.id
+    reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
+    bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
     show_anime(message)
 
 
 @bot.message_handler(commands=['manga'])
 def manga(message):
-    cid = message.chat.id
+    reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
+    bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
     show_manga(message)
 
 @bot.message_handler(commands=['character'])
 def character(message):
-    cid = message.chat.id
+    reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
+    bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
     show_character(message)
 
 
 @bot.message_handler(commands=['sub'])
 def command_to_subscribe(message):
-    cid = message.chat.id
     subscribe_user(message)
 
 
 @bot.message_handler(commands=['list_admins'])
 def command_list_admins(message):
-    cid = message.chat.id
     list_admins(message)
     
 
 @bot.message_handler(commands=['report'])
 def command_report(message):
-    cid = message.chat.id
+    reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
+    bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
     report(message)
 
 
 @bot.message_handler(commands=['blacklist'])
 def command_blackwords(message):
-    cid = message.chat.id
     blacklist(message)
 
 def add_blackword(cid, uid, msg_id):
@@ -492,12 +493,10 @@ def endPollAdd(message, data):
 
 @bot.message_handler(commands=['set_bio'])
 def set_bio_command(message):
-    cid = message.chat.id
     set_description(message)
 
 @bot.message_handler(commands=['afk'])
 def afk_command(message):
-    cid = message.chat.id
     set_afk(message)
 
 @bot.message_handler(func=lambda message: message.text.lower().startswith('brb') or message.text.lower().startswith('brb '))
@@ -507,32 +506,30 @@ def brb_command(message):
 
 @bot.message_handler(commands=['add_anime'])
 def add_anime_command(message):
-    cid = message.chat.id
     add_anime(message)
 
 @bot.message_handler(commands=['del_anime'])
 def del_anime_command(message):
-    cid = message.chat.id
     del_anime(message)
 
 @bot.message_handler(commands=['tr'])
 def tr_command(message):
-    cid = message.chat.id
     translate_command(message)
 
 @bot.message_handler(commands=['reverse'])
 def reverse_command(message):
-    cid = message.chat.id
+    reaction = ReactionTypeEmoji(type="emoji", emoji="👀")
+    bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
     reverse(message)
 
 @bot.message_handler(commands=['perm_ai'])
 def akira_perm_ai(message):
-    cid = message.chat.id
     get_permissions_ai(message)
 
 @bot.message_handler(commands=['describe'])
 def describe_command(message):
-    cid = message.chat.id
+    reaction = ReactionTypeEmoji(type="emoji", emoji="👀")
+    bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
     describe(message)
 
 #Triggers
@@ -937,6 +934,7 @@ def handle_message(message):
         msg = message.text.lower()
         if msg is None or (not msg.startswith("akira,") and not msg.startswith("aki,")):
             return
+
         isAi = None
         user_id = message.from_user.id
         isAi = "Yes" if any(admin['user_id'] == user_id for admin in Admins.find()) else None
@@ -949,10 +947,14 @@ def handle_message(message):
 
     
         if message.chat.type not in ['supergroup', 'group'] or isAi is None:
+            reaction = ReactionTypeEmoji(type="emoji", emoji="🤡")
+            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
             bot.reply_to(message, "No eres digno de mis respuestas mortal!")
             return
     
         if len(message.text) > 80:
+            reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
+            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
             bot.reply_to(message, "Demasiado texto! Me mareo 😵‍💫")
             return
     
@@ -975,29 +977,51 @@ def handle_message(message):
             descr = user.get('description', "None")
             reply = f"to_username: @{username}, description: '{descr}'"
             
-        prompt = f"""
+        prompt = """
     [Rol] Eres Akira, la hija de @MarkyWTF el cual es un dios piña y a la vez tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'.
-    Teniendo en cuenta la siguiente información del usuario: 
+    Teniendo en cuenta la siguiente información del usuario:    
+    Solo puedes usar estos emojis: ["👍","👎","❤","🔥","🥰","👏","😁","🤔","🤯","😱","🤬","😢","🤩","🤮","💩","🥱","🥴","😍","🤣","💔","🤨","😐","🍾","💋","🖕","😈","😴","😭","🤓","🙈""🤝""🤗","🫡","🎅","💅","🤪","🦄","😘","😎","🤷‍♀"]
+    Devuelve todo en formato json con este formato: {message: "respuesta", reaction: "emoji"}
     """
         input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']]Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol con respuestas naturales y devuelve un texto limpio sin nada que arruine el rol."
         
         colorama.init()
-        print(Fore.BLUE + input_text)
+        #print(Fore.BLUE + input_text)
     
         try:
             response = model.generate_content(input_text)
         except Exception as e:
             print(f"An error occurred: {e}")
             return
-    
+        reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
+        bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
         bot.send_chat_action(message.chat.id, 'typing')
         time.sleep(3)
+
         print(response.text)
+
+        # Encuentra el índice de inicio y final de la parte JSON
+        start_index = response.text.find('{')
+        end_index = response.text.rfind('}')
+        # Extrae la parte JSON de la cadena
+        json_part = response.text[start_index:end_index + 1]
+        # Carga la cadena JSON a un diccionario en Python
+        dict_object = json.loads(json_part)
+        
+        text = dict_object["message"]
+        reaction_emoji = dict_object["reaction"]
         try:
-            bot.reply_to(message, response.text, parse_mode='HTML')
+            msg = bot.reply_to(message, text, parse_mode='HTML')
+
+            reaction = ReactionTypeEmoji(type="emoji", emoji=reaction_emoji)
+            bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
         except ApiTelegramException as err:
             print(err)
-        
+            reaction = ReactionTypeEmoji(type="emoji", emoji="💅")
+            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
+            return
+        reaction = ReactionTypeEmoji(type="emoji", emoji="⚡")
+        bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
            
            
         #AKF

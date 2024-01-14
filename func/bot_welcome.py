@@ -3,6 +3,7 @@ import os
 import random
 from datetime import datetime
 from pymongo import MongoClient
+from telebot.types import ReactionTypeEmoji
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -98,4 +99,7 @@ def send_welcome(message):
         welcome_message = random.choice(default_welcome_messages)
 
     # Enviamos el mensaje de bienvenida al grupo
-    bot.reply_to(message, f"{welcome_message}")
+    msg = bot.reply_to(message, f"{welcome_message}")
+
+    reaction = ReactionTypeEmoji(type="emoji", emoji="😁")
+    bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])

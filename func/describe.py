@@ -4,6 +4,7 @@ import os
 import PIL.Image
 from dotenv import load_dotenv
 from pymongo import MongoClient
+from telebot.types import ReactionTypeEmoji
 
 load_dotenv()
 
@@ -21,8 +22,6 @@ model = genai.GenerativeModel('gemini-pro-vision')
 
 def describe(message):
     chat_id = message.chat.id
-    user_id = message.from_user.id
-    chat_member = bot.get_chat_member(chat_id, message.from_user.id)
 
     if chat_id != -1001485529816 and message.from_user.id != 873919300:
         bot.reply_to(message, "Este comando es exclusivo de Otaku Senpai.")
@@ -36,6 +35,9 @@ def describe(message):
         bot.send_message(message.chat.id, f"Debes hacer reply a una imagen para poder describirla")
         return
     
+    reaction = ReactionTypeEmoji(type="emoji", emoji="🤔")
+    bot.set_message_reaction(message.chat.id, message.reply_to_message.message_id, reaction=[reaction])
+
     try:
         fileID = message.reply_to_message.photo[-1].file_id
         file_info = bot.get_file(fileID)
@@ -45,7 +47,11 @@ def describe(message):
             new_file.write(downloaded_file)
 
         with PIL.Image.open('image.jpg') as img:
-            response = model.generate_content(["Describe la imagen y su procedencia si es posible, todo en español.", img])
-            bot.reply_to(message, response.text)
+            response = model.generate_content(["Describe la imagen y su procedencia si es posible, y da tu opinión sobre ella, todo en español.", img])
+            msg = bot.reply_to(message, response.text)
+            
+            reaction = ReactionTypeEmoji(type="emoji", emoji="🤓")
+            bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
+
     except Exception as e:
         print(f"Error al procesar la imagen: {e}")

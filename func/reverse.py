@@ -7,6 +7,7 @@ import PIL.Image
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
+from telebot.types import ReactionTypeEmoji
 
 load_dotenv()
 
@@ -51,6 +52,10 @@ def reverse(message):
         response = requests.post(url, params=params, files={'file': img})
 
     res = json.loads(response.text)
+
+    reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
+    bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
+
     print(f"Haciendo soliticud a SauceNAO... user: @{message.from_user.username}")
 
     if 'results' in res:
@@ -66,8 +71,15 @@ def reverse(message):
             
         if characters is not None:
             text = f"**Búsqueda: {characters}**\n**Fuente: {source}**"
+            bot.reply_to(message, "No se encontraron personajes en la respuesta de la API.")
+            reaction = ReactionTypeEmoji(type="emoji", emoji="⚡")
+            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
             bot.reply_to(message, text, parse_mode="Markdown")
         else:
-            bot.reply_to(message, "No se encontraron personajes en la respuesta de la API.")
+            msg = bot.reply_to(message, "No se encontraron personajes en la respuesta de la API.")
+            reaction = ReactionTypeEmoji(type="emoji", emoji="💅")
+            bot.set_message_reaction(msg.chat.id, msg.message_id, reaction=[reaction])
     else:
-        bot.reply_to(message, "No se encontraron resultados en la API.")
+        msg = bot.reply_to(message, "No se encontraron resultados en la API.")
+        reaction = ReactionTypeEmoji(type="emoji", emoji="💅")
+        bot.set_message_reaction(msg.chat.id, msg.message_id, reaction=[reaction])

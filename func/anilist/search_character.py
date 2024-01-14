@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from func.api_anilist import searchCharacter
 from deep_translator import GoogleTranslator
 from html2text import html2text
+from telebot.types import ReactionTypeEmoji
 import telebot
 import requests
 import re
@@ -30,6 +31,9 @@ def show_character(message):
         character_name = " ".join(referral_all[1:])
         character = searchCharacter(character_name)
         if 'errors' in character:
+            reaction = ReactionTypeEmoji(type="emoji", emoji="🤷‍♀")
+            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
+
             for error in character['errors']:
                 match error['message']:
                     case "Not Found.":
@@ -37,6 +41,9 @@ def show_character(message):
                     case _:
                         bot.send_message(message.chat.id, error['message'])
         else:
+            reaction = ReactionTypeEmoji(type="emoji", emoji="⚡")
+            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
+
             full_name = character['data']['Character']['name']['full']
             native_name = character['data']['Character']['name']['native']
             image = character['data']['Character']['image']['large']
