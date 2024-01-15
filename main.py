@@ -881,6 +881,101 @@ def command_unmute_user(message):
 #
 #    print(frases_asignadas)
 
+
+@bot.message_handler(commands=['akira'])
+def command_unmute_user(message):
+    msg = message.text.lower()
+         
+    isAi = None
+    user_id = message.from_user.id
+    isAi = "Yes" if any(admin['user_id'] == user_id for admin in Admins.find()) else None
+    user = users.find_one({"user_id": user_id})
+    isAki = user.get('isAki', None)
+    user_info = user.get('description', None)
+
+    if isAki is not None:
+        isAi = "Yes"
+             
+             
+    if message.chat.type not in ['supergroup', 'group'] or isAi is None:
+        reaction = ReactionTypeEmoji(type="emoji", emoji="🤡")
+        bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
+        bot.reply_to(message, "No eres digno de mis respuestas mortal!")
+        return
+             
+    if len(message.text) > 80:
+        reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
+        bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
+        bot.reply_to(message, "Demasiado texto! Me mareo 😵‍💫")
+        return
+             
+    mention = "None"
+    if hasattr(message, 'entities') and message.entities is not None:
+        for entity in message.entities:
+            if entity.type == "mention":
+                user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
+                user = users.find_one({"username": user_name})
+                print(user)
+                descr = user.get('description', "None")
+                mention = f"to_username: @{user_name}, description: '{descr}'"
+         
+    reply = "None"
+    if message.reply_to_message and message.reply_to_message.forum_topic_created is None:
+        user_id = message.reply_to_message.from_user.id
+        username = message.reply_to_message.from_user.username
+        #text = message.reply_to_message.text
+        user = users.find_one({"user_id": user_id})
+        descr = user.get('description', "None")
+        reply = f"to_username: @{username}, description: '{descr}'"
+         
+    prompt = """
+    [Rol] Eres Akira, la hija de @MarkyWTF el cual es un dios piña y a la vez tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'.
+    Teniendo en cuenta la siguiente información del usuario:    
+    Solo puedes usar estos emojis: ["👍","👎","❤","🔥","🥰","👏","😁","🤔","🤯","😱","🤬","😢","🤩","🤮","💩","🥱","🥴","😍","🤣","💔","🤨","😐","🍾","💋","🖕","😈","😴","😭","🤓","🙈""🤝""🤗","🫡","🎅","💅","🤪","🦄","😘","😎","🤷‍♀"]
+    Devuelve todo en formato json con este formato: {message: "respuesta", reaction: "emoji"}
+    """
+    input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']]Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol con respuestas naturales y devuelve un texto limpio sin nada que arruine el rol."
+         
+    colorama.init()
+    #print(Fore.BLUE + input_text)
+     
+    try:
+        response = model.generate_content(input_text)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return
+    reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
+    bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
+    bot.send_chat_action(message.chat.id, 'typing')
+    time.sleep(3)
+         
+    print(response.text)
+     
+    # Encuentra el índice de inicio y final de la parte JSON
+    start_index = response.text.find('{')
+    end_index = response.text.rfind('}')
+    # Extrae la parte JSON de la cadena
+    json_part = response.text[start_index:end_index + 1]
+    # Carga la cadena JSON a un diccionario en Python
+    dict_object = json.loads(json_part)
+     
+    text = dict_object["message"]
+    reaction_emoji = dict_object["reaction"]
+    try:
+        msg = bot.reply_to(message, text, parse_mode='HTML')
+         
+        reaction = ReactionTypeEmoji(type="emoji", emoji=reaction_emoji)
+        bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
+    except ApiTelegramException as err:
+        print(err)
+        reaction = ReactionTypeEmoji(type="emoji", emoji="💅")
+        bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
+        return
+    reaction = ReactionTypeEmoji(type="emoji", emoji="⚡")
+    bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
+
+
+
 #LAMBDA
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
