@@ -884,6 +884,11 @@ def command_unmute_user(message):
 
 @bot.message_handler(commands=['akira'])
 def command_unmute_user(message):
+
+    if message.chat.id != -1001485529816 and message.from_user.id != 873919300:
+        bot.reply_to(message, "Este comando es exclusivo de Otaku Senpai.")
+        return
+    
     msg = message.text.lower()
          
     isAi = None
