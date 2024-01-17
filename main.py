@@ -29,7 +29,7 @@ from func.blacklist.blacklist import *
 #Other Command
 from func.bot_welcome import send_welcome
 from func.info import info
-from func.sticker import sticker_info
+from func.sticker import sticker_info, steal_sticker
 from func.list_admins import list_admins, isAdmin
 from func.report import report
 from func.describe import describe
@@ -518,7 +518,7 @@ def tr_command(message):
 
 @bot.message_handler(commands=['reverse'])
 def reverse_command(message):
-    reaction = ReactionTypeEmoji(type="emoji", emoji="👀")
+    reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
     bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
     reverse(message)
 
@@ -526,9 +526,13 @@ def reverse_command(message):
 def akira_perm_ai(message):
     get_permissions_ai(message)
 
+@bot.message_handler(commands=['steal'])
+def steal_sticker_command(message):
+    steal_sticker(message)
+                    
 @bot.message_handler(commands=['describe'])
 def describe_command(message):
-    reaction = ReactionTypeEmoji(type="emoji", emoji="👀")
+    reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
     bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
     describe(message)
 
