@@ -1194,6 +1194,7 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/manga", "Buscar información sobre un manga"),
         telebot.types.BotCommand("/character", "Buscar información sobre un personaje"),
         telebot.types.BotCommand("/afk", "Modo afk"),
+        telebot.types.BotCommand("/steal", "Obtener Stickers"),
         telebot.types.BotCommand("/set_bio", "Poner descripción"),
         telebot.types.BotCommand("/info", "Ver la información de un usuario"),
         telebot.types.BotCommand("/tr", "Traducir elementos"),
