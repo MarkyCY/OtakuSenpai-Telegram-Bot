@@ -29,7 +29,7 @@ from func.blacklist.blacklist import *
 #Other Command
 from func.bot_welcome import send_welcome
 from func.info import info
-from func.sticker import sticker_info, steal_sticker
+from func.sticker import sticker_info, steal_sticker, sticker_del
 from func.list_admins import list_admins, isAdmin
 from func.report import report
 from func.describe import describe
@@ -322,6 +322,10 @@ def respuesta_botones_inline(call):
 @bot.message_handler(commands=['sticker_info'])
 def send_sticker_info(message):
     sticker_info(message)
+
+@bot.message_handler(commands=['del_sticker'])
+def del_sticker_command(message):
+    sticker_del(message)
 
 # Definimos una función que será llamada cuando ocurra un cambio en los miembros del grupo
 @bot.message_handler(content_types=['new_chat_members'])
@@ -1105,6 +1109,7 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/character", "Buscar información sobre un personaje"),
         telebot.types.BotCommand("/afk", "Modo afk"),
         telebot.types.BotCommand("/steal", "Obtener Stickers"),
+        telebot.types.BotCommand("/del_sticker", "Eliminar Sticker del Pack"),
         telebot.types.BotCommand("/set_bio", "Poner descripción"),
         telebot.types.BotCommand("/info", "Ver la información de un usuario"),
         telebot.types.BotCommand("/tr", "Traducir elementos"),
@@ -1123,18 +1128,18 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/unmute", "Desmutear a un Usuario"),
         telebot.types.BotCommand("/sub", "Subscribirse al concurso")
     ])
-    bot.remove_webhook()
-    time.sleep(1)
-    print('Iniciando el Bot')
-    bot.infinity_polling()
-    #conf.get_default().config_path = "./config_ngrok.yml"
-    #conf.get_default().region = "us"
-    #ngrok.set_auth_token(ngrok_token)
-    #ngrok_tunel = ngrok.connect(5000, bind_tls=True)
-    #ngrok_url = ngrok_tunel.public_url
-    #print("URL NGROK: ", ngrok_url)
     #bot.remove_webhook()
     #time.sleep(1)
-    #bot.set_webhook(url=ngrok_url)
-    ##web_server.run(host="0.0.0.0", port=5000)
-    #serve(web_server, host="0.0.0.0", port=5000)
+    #print('Iniciando el Bot')
+    #bot.infinity_polling()
+    conf.get_default().config_path = "./config_ngrok.yml"
+    conf.get_default().region = "us"
+    ngrok.set_auth_token(ngrok_token)
+    ngrok_tunel = ngrok.connect(5000, bind_tls=True)
+    ngrok_url = ngrok_tunel.public_url
+    print("URL NGROK: ", ngrok_url)
+    bot.remove_webhook()
+    time.sleep(1)
+    bot.set_webhook(url=ngrok_url)
+    #web_server.run(host="0.0.0.0", port=5000)
+    serve(web_server, host="0.0.0.0", port=5000)
