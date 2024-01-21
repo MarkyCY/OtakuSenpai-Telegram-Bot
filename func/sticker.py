@@ -30,19 +30,44 @@ def sticker_info(message):
     else:
         bot.send_message(chat_id, "Por favor, haz reply a un sticker para obtener su ID.")
 
+def sticker_del(message):
+    chat_id = message.chat.id
+    
+    if not (message.reply_to_message and message.reply_to_message.sticker):
+        bot.send_message(chat_id, "Por favor, haz reply a un sticker para obtener su ID.")
+        return
+    
+    packname = "a" + str(message.from_user.id) + "_by_Akira_Senpai_bot"
+    emoji = message.reply_to_message.sticker.emoji
+    reqi = bot.get_sticker_set(packname)
+    
+    delete = {}
+
+    for s in reqi.stickers:
+        delete[s.emoji] = s.file_id
+
+    try:
+        del_sticker = bot.delete_sticker_from_set(delete[emoji])
+        if(del_sticker is True):
+            bot.send_message(chat_id, f"El sticker se ha eliminado del pack.", reply_to_message_id=message.reply_to_message.message_id, parse_mode="html")
+    except Exception as e:
+        print(e)
+        bot.send_message(chat_id, f"No se pudo eliminar el sticker.", reply_to_message_id=message.reply_to_message.message_id, parse_mode="html")
+        
+
 def steal_sticker(message):
     msg = message
     user = msg.from_user
     args = message.text.split(None, 1)
     packnum = 0
     packname = "a" + str(user.id) + "_by_Akira_Senpai_bot"
-    print(packname)
+    
     packname_found = 0
     max_stickers = 120
     while packname_found == 0:
         try:
             stickerset = bot.get_sticker_set(packname)
-            print(stickerset.stickers)
+            
             if len(stickerset.stickers) >= max_stickers:
                 packnum += 1
                 packname = ("a" + str(packnum) + "_" + str(user.id) + "_by_Akira_Senpai_bot")
@@ -50,13 +75,12 @@ def steal_sticker(message):
                 packname_found = 1
         except ApiTelegramException as e:
             if e.result_json['description'] == "Bad Request: STICKERSET_INVALID":
-                print("epa")
                 packname_found = 1
     stealsticker = "stealsticker.png"
     is_animated = False
     is_video = False
     file_id = ""
-    print(msg.reply_to_message.sticker)
+    
     if msg.reply_to_message:
         if msg.reply_to_message.sticker:
             if msg.reply_to_message.sticker.is_animated:
