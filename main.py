@@ -38,6 +38,7 @@ from func.akira_ai import get_permissions_ai
 from func.reverse import reverse
 from func.afk import set_afk
 from func.set_bio import set_description
+from func.useControl import useControlMongo
 #Anime and manga gestion
 from func.anime import *
 #Inline Query
@@ -84,11 +85,15 @@ Tasks = db.tasks
 #VARIABLES GLOBALES .ENV
 Token = os.getenv('BOT_API')
 
+#Token de Gemini y llamada de modelo.
 genai.configure(api_key=os.getenv('GEMINI_API'))
 model = genai.GenerativeModel('gemini-pro')
 
+#Cantidad de rows por página en paginación
 ROW_X_PAGE = int(os.getenv('ROW_X_PAGE'))
 
+#Control de uso diario
+useControlMongoInc = useControlMongo()
 
 bot = telebot.TeleBot(Token)
 
@@ -968,6 +973,16 @@ def handle_message(message):
                 bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
                 bot.reply_to(message, "No eres digno de mis respuestas mortal!")
                 return
+            
+            #Verificar si no se ha llegado al limite de uso
+            if useControlMongoInc.verif_limit(user_id) is False:
+                msg = bot.reply_to(message, "Has llegado al límite de uso diario!")
+                reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
+                bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
+                return
+            
+            #Registrar uso en caso de continuar
+            useControlMongoInc.reg_use(user_id)
 
             if len(message.text) > 80:
                 reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
@@ -1128,18 +1143,18 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/unmute", "Desmutear a un Usuario"),
         telebot.types.BotCommand("/sub", "Subscribirse al concurso")
     ])
-    #bot.remove_webhook()
-    #time.sleep(1)
-    #print('Iniciando el Bot')
-    #bot.infinity_polling()
-    conf.get_default().config_path = "./config_ngrok.yml"
-    conf.get_default().region = "us"
-    ngrok.set_auth_token(ngrok_token)
-    ngrok_tunel = ngrok.connect(5000, bind_tls=True)
-    ngrok_url = ngrok_tunel.public_url
-    print("URL NGROK: ", ngrok_url)
     bot.remove_webhook()
     time.sleep(1)
-    bot.set_webhook(url=ngrok_url)
-    #web_server.run(host="0.0.0.0", port=5000)
-    serve(web_server, host="0.0.0.0", port=5000)
+    print('Iniciando el Bot')
+    bot.infinity_polling()
+    #conf.get_default().config_path = "./config_ngrok.yml"
+    #conf.get_default().region = "us"
+    #ngrok.set_auth_token(ngrok_token)
+    #ngrok_tunel = ngrok.connect(5000, bind_tls=True)
+    #ngrok_url = ngrok_tunel.public_url
+    #print("URL NGROK: ", ngrok_url)
+    #bot.remove_webhook()
+    #time.sleep(1)
+    #bot.set_webhook(url=ngrok_url)
+    ##web_server.run(host="0.0.0.0", port=5000)
+    #serve(web_server, host="0.0.0.0", port=5000)

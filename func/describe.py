@@ -4,6 +4,7 @@ import os
 import PIL.Image
 from dotenv import load_dotenv
 from pymongo import MongoClient
+from func.useControl import useControlMongo
 from telebot.types import ReactionTypeEmoji
 
 load_dotenv()
@@ -18,10 +19,13 @@ Admins = db.admins
 Token = os.getenv('BOT_API')
 bot = telebot.TeleBot(Token)
 
+useControlMongoInc = useControlMongo()
+
 model = genai.GenerativeModel('gemini-pro-vision')
 
 def describe(message):
     chat_id = message.chat.id
+    user_id = message.from_user.id
 
     if chat_id != -1001485529816 and message.from_user.id != 873919300:
         bot.reply_to(message, "Este comando es exclusivo de Otaku Senpai.")
@@ -30,6 +34,17 @@ def describe(message):
     #if chat_member.status not in ['administrator', 'creator'] and not any(admin['user_id'] == user_id for admin in Admins.find()):
     #    bot.reply_to(message, "Solo los administradores pueden usar este comando.")
     #    return
+
+    #Verificar si no se ha llegado al limite de uso
+    if useControlMongoInc.verif_limit(user_id) is False:
+        msg = bot.reply_to(message, "Has llegado al límite de uso diario!")
+        reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
+        bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
+        return
+    
+    #Registrar uso en caso de continuar
+    useControlMongoInc.reg_use(user_id)
+
     
     if not message.reply_to_message or not message.reply_to_message.photo:
         bot.send_message(message.chat.id, f"Debes hacer reply a una imagen para poder describirla")
