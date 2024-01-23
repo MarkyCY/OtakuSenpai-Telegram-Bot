@@ -23,7 +23,7 @@ class useControlMongo:
             user_record = {"user_id": user_id, "date": today_str, "count": 0}
             self.collection.insert_one(user_record)
 
-        return user_record["count"] < Limit
+        return user_record["count"] < int(Limit)
 
     def reg_use(self, user_id):
         today = datetime.date.today()
