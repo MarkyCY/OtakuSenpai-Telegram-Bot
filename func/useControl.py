@@ -1,5 +1,11 @@
 from pymongo import MongoClient
+from dotenv import load_dotenv
 import datetime
+import os
+
+load_dotenv()
+
+Limit = os.getenv('LIMIT_USE')
 
 class useControlMongo:
     def __init__(self):
@@ -17,7 +23,7 @@ class useControlMongo:
             user_record = {"user_id": user_id, "date": today_str, "count": 0}
             self.collection.insert_one(user_record)
 
-        return user_record["count"] < 5
+        return user_record["count"] < Limit
 
     def reg_use(self, user_id):
         today = datetime.date.today()
