@@ -36,14 +36,11 @@ def describe(message):
     #    return
 
     #Verificar si no se ha llegado al limite de uso
-    if useControlMongoInc.verif_limit(user_id) is False:
+    if useControlMongoInc.verif_limit(user_id) is False and not any(admin['user_id'] == user_id for admin in Admins.find()):
         msg = bot.reply_to(message, "Has llegado al límite de uso diario!")
         reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
         bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
         return
-    
-    #Registrar uso en caso de continuar
-    useControlMongoInc.reg_use(user_id)
 
     
     if not message.reply_to_message or not message.reply_to_message.photo:
@@ -67,6 +64,7 @@ def describe(message):
             
             reaction = ReactionTypeEmoji(type="emoji", emoji="🤓")
             bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
-
+            #Registrar uso
+            useControlMongoInc.reg_use(user_id)
     except Exception as e:
         print(f"Error al procesar la imagen: {e}")
