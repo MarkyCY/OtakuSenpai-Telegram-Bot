@@ -980,9 +980,6 @@ def handle_message(message):
                 reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
                 bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
                 return
-            
-            #Registrar uso en caso de continuar
-            useControlMongoInc.reg_use(user_id)
 
             if len(message.text) > 80:
                 reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
@@ -1047,6 +1044,9 @@ def handle_message(message):
 
                 reaction = ReactionTypeEmoji(type="emoji", emoji=reaction_emoji)
                 bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
+
+                #Registrar uso en caso de continuar
+                useControlMongoInc.reg_use(user_id)
             except ApiTelegramException as err:
                 print(err)
                 reaction = ReactionTypeEmoji(type="emoji", emoji="💅")
