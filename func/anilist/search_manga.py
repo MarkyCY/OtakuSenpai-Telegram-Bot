@@ -36,9 +36,9 @@ def show_manga(message):
             for error in manga['errors']:
                 match error['message']:
                     case "Not Found.":
-                        bot.send_message(message.chat.id, f"Manga no encontrado 😣")
+                        bot.reply_to(message, f"Manga no encontrado 😣")
                     case _:
-                        bot.send_message(message.chat.id, error['message'])
+                        bot.reply_to(message, error['message'])
         else:
             reaction = ReactionTypeEmoji(type="emoji", emoji="⚡")
             bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
@@ -77,6 +77,6 @@ def show_manga(message):
 <strong>Para Adultos?:</strong> {adult}
 """
         
-            bot.send_photo(cid, foto, msg, parse_mode="html")
+            bot.send_photo(cid, foto, msg, parse_mode="html", reply_to_message_id=message.message_id)
     else:
-        bot.send_message(message.chat.id, f"Debes poner el nombre del manga luego de /manga")
+        bot.reply_to(message, f"Debes poner el nombre del manga luego de /manga")
