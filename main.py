@@ -62,14 +62,14 @@ from colorama import Fore
 import json
 load_dotenv()
 
-web_server = Flask(__name__)
+#web_server = Flask(__name__)
 
-@web_server.route('/', methods=['POST'])
-def webhook():
-    if request.headers.get("content-type") == "application/json":
-        update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
-        bot.process_new_updates([update])
-        return "OK", 200
+#@web_server.route('/', methods=['POST'])
+#def webhook():
+#    if request.headers.get("content-type") == "application/json":
+#        update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
+#        bot.process_new_updates([update])
+#        return "OK", 200
 
 #Conectarse a la base de datos MongoDB
 client = MongoClient('localhost', 27017)
@@ -993,8 +993,7 @@ def handle_message(message):
                     if entity.type == "mention":
                         user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
                         user = users.find_one({"username": user_name})
-                        print(user)
-                        descr = user.get('description', "None")
+                        descr = user.get('description', None)
                         mention = f"to_username: @{user_name}, description: '{descr}'"
 
             reply = "None"
@@ -1003,7 +1002,7 @@ def handle_message(message):
                 username = message.reply_to_message.from_user.username
                 #text = message.reply_to_message.text
                 user = users.find_one({"user_id": user_id})
-                descr = user.get('description', "None")
+                descr = user.get('description', None)
                 reply = f"to_username: @{username}, description: '{descr}'"
 
             prompt = """
@@ -1020,6 +1019,7 @@ def handle_message(message):
             try:
                 response = model.generate_content(input_text)
             except Exception as e:
+                bot.reply_to(message, "Lo siento no puedo atenderte ahora", parse_mode='HTML')
                 print(f"An error occurred: {e}")
                 return
             reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
@@ -1144,18 +1144,18 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/unmute", "Desmutear a un Usuario"),
         telebot.types.BotCommand("/sub", "Subscribirse al concurso")
     ])
-    #bot.remove_webhook()
-    #time.sleep(1)
-    #print('Iniciando el Bot')
-    #bot.infinity_polling()
-    conf.get_default().config_path = "./config_ngrok.yml"
-    conf.get_default().region = "us"
-    ngrok.set_auth_token(ngrok_token)
-    ngrok_tunel = ngrok.connect(5000, bind_tls=True)
-    ngrok_url = ngrok_tunel.public_url
-    print("URL NGROK: ", ngrok_url)
     bot.remove_webhook()
     time.sleep(1)
-    bot.set_webhook(url=ngrok_url)
-    #web_server.run(host="0.0.0.0", port=5000)
-    serve(web_server, host="0.0.0.0", port=5000)
+    print('Iniciando el Bot')
+    bot.infinity_polling()
+    #conf.get_default().config_path = "./config_ngrok.yml"
+    #conf.get_default().region = "us"
+    #ngrok.set_auth_token(ngrok_token)
+    #ngrok_tunel = ngrok.connect(5000, bind_tls=True)
+    #ngrok_url = ngrok_tunel.public_url
+    #print("URL NGROK: ", ngrok_url)
+    #bot.remove_webhook()
+    #time.sleep(1)
+    #bot.set_webhook(url=ngrok_url)
+    ##web_server.run(host="0.0.0.0", port=5000)
+    #serve(web_server, host="0.0.0.0", port=5000)
