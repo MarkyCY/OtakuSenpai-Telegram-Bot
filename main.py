@@ -72,7 +72,8 @@ load_dotenv()
 #        return "OK", 200
 
 #Conectarse a la base de datos MongoDB
-client = MongoClient('localhost', 27017)
+mongo_uri = os.getenv('MONGO_URI')
+client = MongoClient(mongo_uri)
 db = client.otakusenpai
 contest = db.contest
 Triggers = db.triggers

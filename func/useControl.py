@@ -9,7 +9,8 @@ Limit = os.getenv('LIMIT_USE')
 
 class useControlMongo:
     def __init__(self):
-        self.client = MongoClient('localhost', 27017)
+        self.mongo_uri = os.getenv('MONGO_URI')
+client = MongoClient(mongo_uri)
         self.db = self.client["otakusenpai"]
         self.collection = self.db["count_use"]
 

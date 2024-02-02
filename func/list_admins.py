@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Conectar a la base de datos
-client = MongoClient('localhost', 27017)
+mongo_uri = os.getenv('MONGO_URI')
+client = MongoClient(mongo_uri)
 db = client.otakusenpai
 chat_admins = db.admins
 

@@ -10,7 +10,8 @@ from telebot.types import ReactionTypeEmoji
 load_dotenv()
 
 # Conectar a la base de datos
-client = MongoClient('localhost', 27017)
+mongo_uri = os.getenv('MONGO_URI')
+client = MongoClient(mongo_uri)
 db = client.otakusenpai
 users = db.users
 Admins = db.admins
