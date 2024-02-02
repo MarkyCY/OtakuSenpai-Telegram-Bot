@@ -34,7 +34,7 @@ from func.list_admins import list_admins, isAdmin
 from func.report import report
 from func.describe import describe
 from func.traduction import translate_command
-from func.akira_ai import get_permissions_ai
+from func.akira_ai import get_permissions_ai, akira_ai
 from func.reverse import reverse
 from func.afk import set_afk
 from func.set_bio import set_description
@@ -54,11 +54,9 @@ from func.anilist.search_manga import show_manga
 from func.anilist.search_anime import show_anime
 from func.anilist.search_character import show_character
 #Concurso
-from func.concurso.sub_user import subscribe_user
+from func.concurso.sub_user import subscribe_user, unsubscribe_user
 #Evento
 from func.event import calvicia
-import colorama
-from colorama import Fore
 import json
 load_dotenv()
 
@@ -344,8 +342,10 @@ def on_chat_member_updated(message):
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    cid = message.chat.id
-    bot.send_message(message.chat.id, "Hola para subscribirte en el concurso solo escribe o toca: /sub")
+    if (message.chat.type == 'private'):
+        bot.send_message(message.chat.id, "Hola para subscribirte en el concurso solo escribe o toca: /sub")
+    else:
+        bot.send_message(message.chat.id, "Uhhh quieres participar? Contactame por PV y escribeme /sub \n@Akira_Senpai_bot")
     print(message.from_user.username)
 
 
@@ -376,7 +376,13 @@ def character(message):
 
 @bot.message_handler(commands=['sub'])
 def command_to_subscribe(message):
-    subscribe_user(message)
+    if message.chat.type == 'private':
+        subscribe_user(message)
+
+@bot.message_handler(commands=['unsub'])
+def command_to_unsubscribe(message):
+    if message.chat.type == 'private':
+        unsubscribe_user(message)
 
 
 @bot.message_handler(commands=['list_admins'])
@@ -949,112 +955,9 @@ def handle_message(message):
             response = random.choice(trigger_text)
             bot.reply_to(message, response)
         
-
-
         #Akira AI
-        msg = message.text.lower()
-        if msg is not None and (msg.startswith("akira,") or msg.startswith("aki,")):
+        akira_ai(message)
 
-            isAi = None
-            user_id = message.from_user.id
-            isAi = "Yes" if any(admin['user_id'] == user_id for admin in Admins.find()) else None
-            user = users.find_one({"user_id": user_id})
-            isAki = user.get('isAki', None)
-            user_info = user.get('description', None)
-
-            if isAki is not None:
-                isAi = "Yes"
-
-            if message.chat.id != -1001485529816 and message.from_user.id != 873919300:
-                bot.reply_to(message, "Esta función es exclusiva de Otaku Senpai.")
-                return
-
-            if message.chat.type not in ['supergroup', 'group'] or isAi is None:
-                reaction = ReactionTypeEmoji(type="emoji", emoji="🤡")
-                bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
-                bot.reply_to(message, "No eres digno de mis respuestas mortal!")
-                return
-            
-            #Verificar si no se ha llegado al limite de uso
-            if useControlMongoInc.verif_limit(user_id) is False and not any(admin['user_id'] == user_id for admin in Admins.find()):
-                msg = bot.reply_to(message, "Has llegado al límite de uso diario!")
-                reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
-                bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
-                return
-
-            if len(message.text) > 80:
-                reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
-                bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
-                bot.reply_to(message, "Demasiado texto! Me mareo 😵‍💫")
-                return
-
-            mention = "None"
-            if hasattr(message, 'entities') and message.entities is not None:
-                for entity in message.entities:
-                    if entity.type == "mention":
-                        user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
-                        user = users.find_one({"username": user_name})
-                        descr = user.get('description', None)
-                        mention = f"to_username: @{user_name}, description: '{descr}'"
-
-            reply = "None"
-            if message.reply_to_message and message.reply_to_message.forum_topic_created is None:
-                user_id = message.reply_to_message.from_user.id
-                username = message.reply_to_message.from_user.username
-                #text = message.reply_to_message.text
-                user = users.find_one({"user_id": user_id})
-                descr = user.get('description', None)
-                reply = f"to_username: @{username}, description: '{descr}'"
-
-            prompt = """
-        [Rol] Eres Akira, la hija de @MarkyWTF el cual es un dios piña y a la vez tu creador y al igual que el amas mushoku tensei pero no sueles mencionarlo. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'.
-        Teniendo en cuenta la siguiente información del usuario:    
-        Solo puedes usar estos emojis: ["👍","👎","❤","🔥","🥰","👏","😁","🤔","🤯","😱","🤬","😢","🤩","🤮","💩","🥱","🥴","😍","🤣","💔","🤨","😐","🍾","💋","🖕","😈","😴","😭","🤓","🙈""🤝""🤗","🫡","🎅","💅","🤪","🦄","😘","😎","🤷‍♀"]
-        Devuelve todo en formato json con este formato: {message: "respuesta", reaction: "emoji"}
-        """
-            input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']]Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol con respuestas naturales y devuelve un texto limpio sin nada que arruine el rol."
-
-            colorama.init()
-            #print(Fore.BLUE + input_text)
-
-            try:
-                response = model.generate_content(input_text)
-            except Exception as e:
-                bot.reply_to(message, "Lo siento no puedo atenderte ahora", parse_mode='HTML')
-                print(f"An error occurred: {e}")
-                return
-            reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
-            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
-            bot.send_chat_action(message.chat.id, 'typing')
-            time.sleep(3)
-
-            print(response.text)
-
-            # Encuentra el índice de inicio y final de la parte JSON
-            start_index = response.text.find('{')
-            end_index = response.text.rfind('}')
-            # Extrae la parte JSON de la cadena
-            json_part = response.text[start_index:end_index + 1]
-            # Carga la cadena JSON a un diccionario en Python
-            dict_object = json.loads(json_part)
-
-            text = dict_object["message"]
-            reaction_emoji = dict_object["reaction"]
-            try:
-                msg = bot.reply_to(message, text, parse_mode='HTML')
-
-                reaction = ReactionTypeEmoji(type="emoji", emoji=reaction_emoji)
-                bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
-
-                #Registrar uso
-                useControlMongoInc.reg_use(user_id)
-                
-            except ApiTelegramException as err:
-                print(err)
-                reaction = ReactionTypeEmoji(type="emoji", emoji="💅")
-                bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
-                return
-            #Akira END
         #AKF
         if message.reply_to_message and message.reply_to_message.forum_topic_created is None:
             user_id = message.reply_to_message.from_user.id
