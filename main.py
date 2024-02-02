@@ -906,10 +906,11 @@ def command_unmute_user(message):
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
     #Leave Group
-    if message.chat.id != -1001485529816 and message.chat.id != -1001664356911:
-        bot.send_message(message.chat.id, 'Lo siento solo puedo ser usada en <a href="https://t.me/OtakuSenpai2020">Otaku Senpai</a>', parse_mode="HTML")
-        bot.leave_chat(message.chat.id)
-        return
+    if message.chat.type in ['supergroup', 'group']:
+        if message.chat.id != -1001485529816 and message.chat.id != -1001664356911:
+            bot.send_message(message.chat.id, 'Lo siento solo puedo ser usada en <a href="https://t.me/OtakuSenpai2020">Otaku Senpai</a>', parse_mode="HTML")
+            bot.leave_chat(message.chat.id)
+            return
     
     #Triggers
     if message.chat.type in ['group', 'supergroup']:
