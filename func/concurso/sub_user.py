@@ -29,6 +29,18 @@ def add_user(user_id):
 
     return result
 
+def del_user(user_id):
+    # Consulta para seleccionar el documento a actualizar
+    filter = {'contest_num': 1}
+
+    # Operación de actualización para agregar dos usuarios más a la lista 'completed_by'
+    update = {'$pull': {'subscription': {'user': user_id}}}
+
+    # Actualizar el documento en la colección 'tasks'
+    result = contest.update_one(filter, update)
+
+    return result
+
 def reg_user(user_id, username):
     users.insert_one({"user_id": user_id, "username": username})
 
@@ -61,4 +73,26 @@ def subscribe_user(message):
             
             if not found:
                 add_user(user_id)
-                bot.send_message(chat_id, f'Bien acabo de registrarte en el concurso @{username}')
+                bot.send_message(chat_id, f'Bien acabo de registrarte en el concurso @{username}. Para desuscribirte en cualquier momento usa el comando /unsub')
+
+
+def unsubscribe_user(message):
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    found = False
+    
+    user = users.find_one({'user_id': user_id})
+    
+    for user in contest.find({'contest_num': 1}):
+            for sub in user['subscription']:
+                if sub['user'] == user_id:
+                    found = True
+                    break
+                
+            if found:
+                del_user(user_id)
+                bot.send_message(chat_id, f"Bien te has desuscrito del concurso.")
+                break
+            
+            if not found:
+                bot.send_message(chat_id, f'No estás registrado en el concurso')
