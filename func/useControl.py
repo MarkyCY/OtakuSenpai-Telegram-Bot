@@ -6,11 +6,11 @@ import os
 load_dotenv()
 
 Limit = os.getenv('LIMIT_USE')
+mongo_uri = os.getenv('MONGO_URI')
 
 class useControlMongo:
     def __init__(self):
-        self.mongo_uri = os.getenv('MONGO_URI')
-client = MongoClient(mongo_uri)
+        self.client = MongoClient(mongo_uri)
         self.db = self.client["otakusenpai"]
         self.collection = self.db["count_use"]
 
