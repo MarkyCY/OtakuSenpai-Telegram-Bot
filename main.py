@@ -16,9 +16,7 @@ from telebot.apihelper import ApiTelegramException
 import threading
 import time
 
-from telebot.types import InlineKeyboardMarkup
-from telebot.types import InlineKeyboardButton
-from telebot.types import ReactionTypeEmoji
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReactionTypeEmoji, ReplyKeyboardMarkup, ReplyKeyboardRemove
 import pickle
 from bson import ObjectId
 
@@ -109,6 +107,19 @@ def respuesta_botones_inline(call):
     uid = call.from_user.id
     u_name = call.from_user.username
 
+    JUECES = {6811585914, 938816655, 1881435398, 5602408597}
+
+    if uid not in JUECES:
+        #Contest
+        def is_vote_contest(variable):
+            pattern = r"^contest_vote_(10|[1-9])$"
+            return bool(re.match(pattern, variable))
+
+        if is_vote_contest(call.data):
+            partes = call.data.split("_")
+            bot.answer_callback_query(call.id, f"Has votado: {partes[2]}")
+            return
+        #End contest
 
     #    #Game Paint
     #def is_valid_to_join(variable):
@@ -135,8 +146,7 @@ def respuesta_botones_inline(call):
     if chat_member.status not in ['administrator', 'creator'] and uid not in ADMIN_IDS and isadmin is None:
         bot.answer_callback_query(call.id, "Solo los administradores pueden usar este comando.")
         return
-
-    datos = pickle.load(open(f'./data/{cid}_{mid}', 'rb'))
+        datos = pickle.load(open(f'./data/{cid}_{mid}', 'rb'))
 
     #if u_name == "MarkyWTF":
     #    pass
@@ -320,6 +330,8 @@ def respuesta_botones_inline(call):
         for doc in resul:
             trigger_list.append(doc) # Agregamos cada documento a la lista
         mostrar_pagina(trigger_list, cid, uid, datos["pag"], mid)
+
+
 
 
 
@@ -1018,7 +1030,56 @@ def handle_message(message):
         #    response = random.choice(triggers[trigger])
         #    # Send the response to the group or supergroup
         #    bot.reply_to(message, response)
+                
+
+#scheduler.add_job(calvicia, CronTrigger(hour=hour, minute=minute, second=seconds, timezone=tz), args=(-1001664356911, num))
+import PIL.Image     
+
+btn_contest = ReplyKeyboardMarkup(
+        resize_keyboard=True)
+btn_contest.row('Si')
+btn_contest.row('No')
+
+@bot.message_handler(content_types=['photo'])
+def contest_photo(message):
+    if message.chat.type == 'private':
+        fileID = message.photo[-1].file_id
+        file_info = bot.get_file(fileID)
+        downloaded_file = bot.download_file(file_info.file_path)
+
+        with open(f"func/concurso/{message.from_user.id}.jpg", 'wb') as new_file:
+            new_file.write(downloaded_file)
+
+        bot.send_message(message.chat.id, "Esta imagen es para el concurso?", reply_markup=btn_contest)
+        bot.register_next_step_handler(message, confirm_contest)
+                                       
+def confirm_contest(message):
+        found = False
+        for user in contest.find({'contest_num': 1}):
+            for sub in user['subscription']:
+                if sub['user'] == message.from_user.id:
+                    found = True
+
+        if found == False:
+            return
         
+        if message.text != "Si" and message.text != "No":
+            msg = bot.send_message(message.chat.id, "Seleccione una respuesta correcta")
+            bot.register_next_step_handler(msg, confirm_contest)
+        elif message.text == "No":
+            msg = bot.send_message(message.chat.id, "Ok pues no...", reply_markup=ReplyKeyboardRemove())
+        elif message.text == "Si":
+            markup = InlineKeyboardMarkup(row_width=5)
+            btns = []
+            for i in range(1, 11):
+                btn = InlineKeyboardButton(str(i), callback_data=f"contest_vote_{i}")
+                btns.append(btn)
+            markup.add(*btns)
+
+            with PIL.Image.open(f'func/concurso/{message.from_user.id}.jpg') as img:
+                msg = bot.send_message(message.chat.id, "Foto subida.", reply_markup=ReplyKeyboardRemove())
+                bot.send_photo(-1001664356911, img, f"Foto de concurso:\n@{message.from_user.username}", parse_mode="html", reply_markup=markup)
+
 
 if __name__ == '__main__':
     ngrok_token = os.getenv('NGROK_TOKEN')

@@ -6,6 +6,7 @@ data/
 config_ngrok.yml
 .vscode/
 image.jpg
+func/concurso/*.jpg
 stealsticker.png
 stealsticker.tgs
 stealsticker.webm
