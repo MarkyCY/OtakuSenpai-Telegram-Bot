@@ -90,8 +90,11 @@ def akira_ai(message):
         user_id = message.from_user.id
         isAi = "Yes" if any(admin['user_id'] == user_id for admin in Admins.find()) else None
         user = users.find_one({"user_id": user_id})
-        isAki = user.get('isAki', None)
-        user_info = user.get('description', None)
+        if user is not None:
+            isAki = user.get('isAki', None)
+            user_info = user.get('description', None)
+        else:
+            isAki = None
      
         if isAki is not None:
             isAi = "Yes"
@@ -125,7 +128,10 @@ def akira_ai(message):
                 if entity.type == "mention":
                     user_name = message.text[entity.offset:entity.offset + entity.length].lstrip('@')
                     user = users.find_one({"username": user_name})
-                    descr = user.get('description', None)
+                    if user is not None:
+                        descr = user.get('description', '-')
+                    else:
+                        descr = '-'
                     mention = f"to_username: @{user_name}, description: '{descr}'"
      
         reply = "None"
@@ -134,14 +140,17 @@ def akira_ai(message):
             username = message.reply_to_message.from_user.username
             #text = message.reply_to_message.text
             user = users.find_one({"user_id": user_id})
-            descr = user.get('description', None)
+            if user is not None:
+                descr = user.get('description', None)
+            else:
+                descr = '-'
             reply = f"to_username: @{username}, description: '{descr}'"
      
         prompt = """
     [Rol] Eres Akira, la hija de @MarkyWTF el cual es un dios piña y a la vez tu creador y al igual que el amas mushoku tensei pero no sueles mencionarlo. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'.
     Teniendo en cuenta la siguiente información del usuario:    
     Solo puedes usar estos emojis: ["👍","👎","❤","🔥","🥰","👏","😁","🤔","🤯","😱","🤬","😢","🤩","🤮","💩","🥱","🥴","😍","🤣","💔","🤨","😐","🍾","💋","🖕","😈","😴","😭","🤓","🙈""🤝""🤗","🫡","🎅","💅","🤪","🦄","😘","😎","🤷‍♀"]
-    Devuelve todo en formato json con este formato: {message: "respuesta", reaction: "emoji"}
+    Devuelve todo en formato json con este formato: {message: "respuesta", reaction: "emoji"} en una sola línea y sin signos "\".
     """
         input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']]Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol con respuestas naturales y devuelve un texto limpio sin nada que arruine el rol."
      
@@ -150,6 +159,13 @@ def akira_ai(message):
      
         try:
             response = model.generate_content(input_text)
+            print(response.parts)
+            parts = response.parts
+            if parts:
+                response = response.candidates[0].content.parts[0].text
+            else:
+                response = response.text
+
         except Exception as e:
             bot.reply_to(message, "Lo siento no puedo atenderte ahora", parse_mode='HTML')
             print(f"An error occurred: {e}")
@@ -159,13 +175,12 @@ def akira_ai(message):
         bot.send_chat_action(message.chat.id, 'typing')
         time.sleep(3)
      
-        print(response.text)
-     
+
         # Encuentra el índice de inicio y final de la parte JSON
-        start_index = response.text.find('{')
-        end_index = response.text.rfind('}')
+        start_index = response.find('{')
+        end_index = response.rfind('}')
         # Extrae la parte JSON de la cadena
-        json_part = response.text[start_index:end_index + 1]
+        json_part = response[start_index:end_index + 1]
         # Carga la cadena JSON a un diccionario en Python
         dict_object = json.loads(json_part)
      
