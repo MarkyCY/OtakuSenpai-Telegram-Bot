@@ -864,9 +864,129 @@ def command_unmute_user(message):
         bot.send_message(message.from_user.id, f"Hola, mira esta es la razón por la que no se pudo ejecutar bien el comando: {err.description}")
         bot.reply_to(message, f"No se pudo ejecutar esta acción.")
 
-@bot.message_handler(commands=['aki'])
-def aki_ai_command(message):
-    akira_ai(message)
+
+#scheduler.add_job(calvicia, CronTrigger(hour=hour, minute=minute, second=seconds, timezone=tz), args=(-1001664356911, num))
+import PIL.Image     
+
+btn_contest = ReplyKeyboardMarkup(
+        resize_keyboard=True)
+btn_contest.row('Si')
+btn_contest.row('No')
+
+@bot.message_handler(content_types=['photo'])
+def contest_photo(message):
+    contest_num = 1
+    if message.chat.type != 'private':
+        return
+    
+    found = False
+    for user in contest.find({'contest_num': contest_num}):
+        for sub in user['subscription']:
+            if sub['user'] == message.from_user.id:
+                found = True
+                break
+                 
+    if not found:
+        return
+    
+    fileID = message.photo[-1].file_id
+    file_info = bot.get_file(fileID)
+    downloaded_file = bot.download_file(file_info.file_path)
+    
+    with open(f"func/concurso/{message.from_user.id}.jpg", 'wb') as new_file:
+        new_file.write(downloaded_file)
+    
+    bot.send_message(message.chat.id, "Esta imagen es para el concurso?", reply_markup=btn_contest)
+    bot.register_next_step_handler(message, confirm_contest_photo, contest_num)
+                                       
+def confirm_contest_photo(message, contest_num):
+        found = False
+        for user in contest.find({'contest_num': contest_num}):
+            for sub in user['subscription']:
+                if sub['user'] == message.from_user.id:
+                    found = True
+
+        if found == False:
+            return
+        
+        if message.text != "Si" and message.text != "No":
+            msg = bot.send_message(message.chat.id, "Seleccione una respuesta correcta. O escriba 'Si' o 'No'")
+            bot.register_next_step_handler(msg, confirm_contest_photo)
+        elif message.text == "No":
+            msg = bot.send_message(message.chat.id, "Ok pues no...", reply_markup=ReplyKeyboardRemove())
+        elif message.text == "Si":
+            markup = InlineKeyboardMarkup(row_width=5)
+            btns = []
+            for i in range(1, 11):
+                btn = InlineKeyboardButton(str(i), callback_data=f"contest_vote_{i}")
+                btns.append(btn)
+            markup.add(*btns)
+
+            content = Contest_Data.find_one({'u_id': message.from_user.id, 'type': 'photo'})
+
+            with PIL.Image.open(f'func/concurso/{message.from_user.id}.jpg') as img:
+                msg = bot.send_message(message.chat.id, "Foto subida. Si se desuscribe esta foto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
+                if not content:
+                    Contest_Data.insert_one({'contest_num': contest_num, 'type': 'photo', 'u_id': message.from_user.id})
+                bot.send_photo(-1001664356911, img, f"Foto de concurso:\n@{message.from_user.username}", parse_mode="html", reply_markup=markup)
+
+@bot.message_handler(chat_types=['private']) # You can add more chat types
+def command_help(message):
+    palabras = message.text.split()
+    print(len(palabras))
+    if len(palabras) < 200:
+        return
+    
+    contest_num = 1
+
+    found = False
+    for user in contest.find({'contest_num': contest_num}):
+        for sub in user['subscription']:
+            if sub['user'] == message.from_user.id:
+                found = True
+                break
+                 
+    if not found:
+        return
+    text = message.text
+    bot.send_message(message.chat.id, "Este texto es para el concurso?", reply_markup=btn_contest)
+    bot.register_next_step_handler(message, confirm_contest_text, contest_num, text)
+
+def confirm_contest_text(message, contest_num, text):
+        found = False
+        for user in contest.find({'contest_num': contest_num}):
+            for sub in user['subscription']:
+                if sub['user'] == message.from_user.id:
+                    found = True
+
+        if found == False:
+            return
+        
+        if message.text != "Si" and message.text != "No":
+            msg = bot.send_message(message.chat.id, "Seleccione una respuesta correcta. O escriba 'Si' o 'No'")
+            bot.register_next_step_handler(msg, confirm_contest_photo)
+        elif message.text == "No":
+            msg = bot.send_message(message.chat.id, "Ok pues no...", reply_markup=ReplyKeyboardRemove())
+        elif message.text == "Si":
+            markup = InlineKeyboardMarkup(row_width=5)
+            btns = []
+            for i in range(1, 11):
+                btn = InlineKeyboardButton(str(i), callback_data=f"contest_vote_{i}")
+                btns.append(btn)
+            markup.add(*btns)
+
+            content = Contest_Data.find_one({'u_id': message.from_user.id, 'type': 'text'})     
+                
+            if not content:
+                Contest_Data.insert_one({'contest_num': contest_num, 'type': 'text', 'text': text, 'u_id': message.from_user.id})
+                msg = bot.send_message(message.chat.id, "Texto subido. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
+                bot.send_message(-1001664356911, f"Texto de concurso:\n@{message.from_user.username}\n\n{text}", parse_mode="html", reply_markup=markup)
+            else:
+                Contest_Data.update_one({'u_id': message.from_user.id}, {"$set": {'text': text}})
+                msg = bot.send_message(message.chat.id, "Texto actualizado. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
+                bot.send_message(-1001664356911, f"Texto de concurso actualizado.\n@{message.from_user.username}:\n\n{text}", parse_mode="html", reply_markup=markup)
+
+
 #@bot.message_handler(commands=['start_play'])
 #def gartic(message):
 #    
@@ -1037,75 +1157,6 @@ def handle_message(message):
         #    # Send the response to the group or supergroup
         #    bot.reply_to(message, response)
                 
-
-#scheduler.add_job(calvicia, CronTrigger(hour=hour, minute=minute, second=seconds, timezone=tz), args=(-1001664356911, num))
-import PIL.Image     
-
-btn_contest = ReplyKeyboardMarkup(
-        resize_keyboard=True)
-btn_contest.row('Si')
-btn_contest.row('No')
-
-@bot.message_handler(content_types=['photo'])
-def contest_photo(message):
-    contest_num = 1
-    if message.chat.type == 'private':
-        found = False
-        for user in contest.find({'contest_num': contest_num}):
-            for sub in user['subscription']:
-                if sub['user'] == message.from_user.id:
-                    found = True
-                    break
-
-        if not found:
-            return
-        
-        fileID = message.photo[-1].file_id
-        file_info = bot.get_file(fileID)
-        downloaded_file = bot.download_file(file_info.file_path)
-
-        with open(f"func/concurso/{message.from_user.id}.jpg", 'wb') as new_file:
-            new_file.write(downloaded_file)
-
-        bot.send_message(message.chat.id, "Esta imagen es para el concurso?", reply_markup=btn_contest)
-        bot.register_next_step_handler(message, confirm_contest, contest_num)
-                                       
-def confirm_contest(message, contest_num):
-        found = False
-        for user in contest.find({'contest_num': 1}):
-            for sub in user['subscription']:
-                if sub['user'] == message.from_user.id:
-                    found = True
-
-        if found == False:
-            return
-        
-        if message.text != "Si" and message.text != "No":
-            msg = bot.send_message(message.chat.id, "Seleccione una respuesta correcta. O escriba 'Si' o 'No'")
-            bot.register_next_step_handler(msg, confirm_contest)
-        elif message.text == "No":
-            msg = bot.send_message(message.chat.id, "Ok pues no...", reply_markup=ReplyKeyboardRemove())
-        elif message.text == "Si":
-            markup = InlineKeyboardMarkup(row_width=5)
-            btns = []
-            for i in range(1, 11):
-                btn = InlineKeyboardButton(str(i), callback_data=f"contest_vote_{i}")
-                btns.append(btn)
-            markup.add(*btns)
-
-            content = Contest_Data.find_one({'u_id': message.from_user.id})
-
-            with PIL.Image.open(f'func/concurso/{message.from_user.id}.jpg') as img:
-                msg = bot.send_message(message.chat.id, "Foto subida. Si se desuscribe esta foto se eliminará de la base de datos del concurso y no podrá ser recuperada.", reply_markup=ReplyKeyboardRemove())
-                if not content:
-                    Contest_Data.insert_one({'contest_num': contest_num, 'type': 'photo', 'u_id': message.from_user.id})
-                bot.send_photo(-1001664356911, img, f"Foto de concurso:\n@{message.from_user.username}", parse_mode="html", reply_markup=markup)
-
-#@bot.message_handler(chat_types=['private']) # You can add more chat types
-#def command_help(message):
-#    bot.send_message(message.chat.id, 'Private chat detected, sir!')
-                
-#Contest_Data.insert_one({'contest_num': contest_num, 'type': 'text', 'text': text, 'u_id': message.from_user.id})
 
 if __name__ == '__main__':
     ngrok_token = os.getenv('NGROK_TOKEN')

@@ -83,7 +83,8 @@ def unsubscribe_user(message):
     found = False
     
     user = users.find_one({'user_id': user_id})
-    content = Contest_Data.find_one({'u_id': user_id})
+    content_photo = Contest_Data.find_one({'u_id': user_id, 'type': 'photo'})
+    content_text = Contest_Data.find_one({'u_id': user_id, 'type': 'text'})
 
     for user in contest.find({'contest_num': 1}):
             for sub in user['subscription']:
@@ -98,9 +99,12 @@ def unsubscribe_user(message):
             del_user(user_id)
             bot.send_message(chat_id, f"Bien te has desuscrito del concurso.")
 
-            if content:
-                Contest_Data.delete_one({'u_id': user_id})
-                if content['type'] == 'photo':
-                    os.remove(f"./func/concurso/{user_id}.jpg")
-                bot.send_message(chat_id, f"Se han eliminado tus datos de concurso.")
+            if content_photo:
+                Contest_Data.delete_one({'u_id': user_id, 'type': 'photo'})
+                os.remove(f"./func/concurso/{user_id}.jpg")
+
+            if content_text:
+                Contest_Data.delete_one({'u_id': user_id, 'type': 'text'})
+            
+            bot.send_message(chat_id, f"Se han eliminado tus datos de concurso.")
             break
