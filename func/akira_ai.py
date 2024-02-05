@@ -104,11 +104,11 @@ def akira_ai(message):
             bot.reply_to(message, "Esta función es exclusiva de Otaku Senpai.")
             return
      
-        if message.chat.type not in ['supergroup', 'group'] or isAi is None:
-            reaction = ReactionTypeEmoji(type="emoji", emoji="🤡")
-            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
-            bot.reply_to(message, "No eres digno de mis respuestas mortal!")
-            return
+        #if message.chat.type not in ['supergroup', 'group'] or isAi is None:
+        #    reaction = ReactionTypeEmoji(type="emoji", emoji="🤡")
+        #    bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
+        #    bot.reply_to(message, "No eres digno de mis respuestas mortal!")
+        #    return
                  
         #Verificar si no se ha llegado al limite de uso
         if useControlMongoInc.verif_limit(user_id) is False and not any(admin['user_id'] == user_id for admin in Admins.find()):
