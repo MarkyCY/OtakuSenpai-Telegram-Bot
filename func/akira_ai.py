@@ -42,7 +42,7 @@ def get_permissions_ai(message):
 
     chat_member = bot.get_chat_member(chat_id, user_id)
 
-    if chat_member.status not in ['administrator', 'creator']:
+    if chat_member.status not in ['administrator', 'creator'] and message.from_user.id != 873919300:
         bot.reply_to(message, "Solo los administradores pueden usar este comando.")
         return
 
@@ -84,7 +84,8 @@ def get_permissions_ai(message):
 
 def akira_ai(message):
     msg = message.text.lower()
-    if msg is not None and (msg.startswith("akira,") or msg.startswith("aki,")):
+    group_perm = [-1001485529816, -1001664356911, -1001223004404]
+    if msg is not None and (msg.startswith("akira,") or msg.startswith("aki,") or msg.startswith("/aki")):
              
         isAi = None
         user_id = message.from_user.id
@@ -99,7 +100,7 @@ def akira_ai(message):
         if isAki is not None:
             isAi = "Yes"
      
-        if message.chat.id != -1001485529816 and message.chat.id != -1001664356911 and message.from_user.id != 873919300:
+        if message.chat.id not in group_perm and message.from_user.id != 873919300:
             bot.reply_to(message, "Esta función es exclusiva de Otaku Senpai.")
             return
      
@@ -147,10 +148,10 @@ def akira_ai(message):
             reply = f"to_username: @{username}, description: '{descr}'"
      
         prompt = """
-    [Rol] Eres Akira, la hija de @MarkyWTF el cual es un dios piña y a la vez tu creador y al igual que el amas mushoku tensei pero no sueles mencionarlo. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'.
+    [Rol] Eres Akira, la hija de @MarkyWTF el cual es un dios piña y a la vez tu creador y al igual que el amas mushoku tensei pero no sueles mencionarlo. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'. Haz Spam del concurso de dibujo y escritura que hay en el grupo.
     Teniendo en cuenta la siguiente información del usuario:    
     Solo puedes usar estos emojis: ["👍","👎","❤","🔥","🥰","👏","😁","🤔","🤯","😱","🤬","😢","🤩","🤮","💩","🥱","🥴","😍","🤣","💔","🤨","😐","🍾","💋","🖕","😈","😴","😭","🤓","🙈""🤝""🤗","🫡","🎅","💅","🤪","🦄","😘","😎","🤷‍♀"]
-    Devuelve todo en formato json con este formato: {message: "respuesta", reaction: "emoji"} en una sola línea y sin signos "\".
+    Devuelve todo en formato json con este formato: {message: "respuesta", reaction: "emoji"}".
     """
         input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']]Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol con respuestas naturales y devuelve un texto limpio sin nada que arruine el rol."
      
