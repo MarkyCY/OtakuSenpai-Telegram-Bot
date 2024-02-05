@@ -11,6 +11,7 @@ client = MongoClient(mongo_uri)
 db = client.otakusenpai
 users = db.users
 contest = db.contest
+Contest_Data = db.contest_data
 
 #Importamos los datos necesarios para el bot
 Token = os.getenv('BOT_API')
@@ -82,17 +83,24 @@ def unsubscribe_user(message):
     found = False
     
     user = users.find_one({'user_id': user_id})
-    
+    content = Contest_Data.find_one({'u_id': user_id})
+
     for user in contest.find({'contest_num': 1}):
             for sub in user['subscription']:
                 if sub['user'] == user_id:
                     found = True
                     break
-                
-            if found:
-                del_user(user_id)
-                bot.send_message(chat_id, f"Bien te has desuscrito del concurso.")
-                break
-            
+
             if not found:
                 bot.send_message(chat_id, f'No estás registrado en el concurso')
+                return
+            
+            del_user(user_id)
+            bot.send_message(chat_id, f"Bien te has desuscrito del concurso.")
+
+            if content:
+                Contest_Data.delete_one({'u_id': user_id})
+                if content['type'] == 'photo':
+                    os.remove(f"./func/concurso/{user_id}.jpg")
+                bot.send_message(chat_id, f"Se han eliminado tus datos de concurso.")
+            break

@@ -72,6 +72,7 @@ mongo_uri = os.getenv('MONGO_URI')
 client = MongoClient(mongo_uri)
 db = client.otakusenpai
 contest = db.contest
+Contest_Data = db.contest_data
 Triggers = db.triggers
 Blacklist = db.blacklist
 Admins = db.admins
@@ -107,9 +108,9 @@ def respuesta_botones_inline(call):
     uid = call.from_user.id
     u_name = call.from_user.username
 
-    JUECES = {6811585914, 938816655, 1881435398, 5602408597}
+    JUECES = {938816655, 1881435398, 5602408597, 5825765407, 1221472021, 873919300, 5963355323}
 
-    if uid not in JUECES:
+    if uid in JUECES:
         #Contest
         def is_vote_contest(variable):
             pattern = r"^contest_vote_(10|[1-9])$"
@@ -146,7 +147,8 @@ def respuesta_botones_inline(call):
     if chat_member.status not in ['administrator', 'creator'] and uid not in ADMIN_IDS and isadmin is None:
         bot.answer_callback_query(call.id, "Solo los administradores pueden usar este comando.")
         return
-        datos = pickle.load(open(f'./data/{cid}_{mid}', 'rb'))
+    
+    datos = pickle.load(open(f'./data/{cid}_{mid}', 'rb'))
 
     #if u_name == "MarkyWTF":
     #    pass
@@ -862,7 +864,9 @@ def command_unmute_user(message):
         bot.send_message(message.from_user.id, f"Hola, mira esta es la razón por la que no se pudo ejecutar bien el comando: {err.description}")
         bot.reply_to(message, f"No se pudo ejecutar esta acción.")
 
-
+@bot.message_handler(commands=['aki'])
+def aki_ai_command(message):
+    akira_ai(message)
 #@bot.message_handler(commands=['start_play'])
 #def gartic(message):
 #    
@@ -918,8 +922,10 @@ def command_unmute_user(message):
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
     #Leave Group
+    group_perm = [-1001485529816, -1001664356911, -1001223004404]
+    
     if message.chat.type in ['supergroup', 'group']:
-        if message.chat.id != -1001485529816 and message.chat.id != -1001664356911:
+        if message.chat.id not in group_perm:
             bot.send_message(message.chat.id, 'Lo siento solo puedo ser usada en <a href="https://t.me/OtakuSenpai2020">Otaku Senpai</a>', parse_mode="HTML")
             bot.leave_chat(message.chat.id)
             return
@@ -1042,7 +1048,18 @@ btn_contest.row('No')
 
 @bot.message_handler(content_types=['photo'])
 def contest_photo(message):
+    contest_num = 1
     if message.chat.type == 'private':
+        found = False
+        for user in contest.find({'contest_num': contest_num}):
+            for sub in user['subscription']:
+                if sub['user'] == message.from_user.id:
+                    found = True
+                    break
+
+        if not found:
+            return
+        
         fileID = message.photo[-1].file_id
         file_info = bot.get_file(fileID)
         downloaded_file = bot.download_file(file_info.file_path)
@@ -1051,9 +1068,9 @@ def contest_photo(message):
             new_file.write(downloaded_file)
 
         bot.send_message(message.chat.id, "Esta imagen es para el concurso?", reply_markup=btn_contest)
-        bot.register_next_step_handler(message, confirm_contest)
+        bot.register_next_step_handler(message, confirm_contest, contest_num)
                                        
-def confirm_contest(message):
+def confirm_contest(message, contest_num):
         found = False
         for user in contest.find({'contest_num': 1}):
             for sub in user['subscription']:
@@ -1064,7 +1081,7 @@ def confirm_contest(message):
             return
         
         if message.text != "Si" and message.text != "No":
-            msg = bot.send_message(message.chat.id, "Seleccione una respuesta correcta")
+            msg = bot.send_message(message.chat.id, "Seleccione una respuesta correcta. O escriba 'Si' o 'No'")
             bot.register_next_step_handler(msg, confirm_contest)
         elif message.text == "No":
             msg = bot.send_message(message.chat.id, "Ok pues no...", reply_markup=ReplyKeyboardRemove())
@@ -1076,10 +1093,19 @@ def confirm_contest(message):
                 btns.append(btn)
             markup.add(*btns)
 
+            content = Contest_Data.find_one({'u_id': message.from_user.id})
+
             with PIL.Image.open(f'func/concurso/{message.from_user.id}.jpg') as img:
-                msg = bot.send_message(message.chat.id, "Foto subida.", reply_markup=ReplyKeyboardRemove())
+                msg = bot.send_message(message.chat.id, "Foto subida. Si se desuscribe esta foto se eliminará de la base de datos del concurso y no podrá ser recuperada.", reply_markup=ReplyKeyboardRemove())
+                if not content:
+                    Contest_Data.insert_one({'contest_num': contest_num, 'type': 'photo', 'u_id': message.from_user.id})
                 bot.send_photo(-1001664356911, img, f"Foto de concurso:\n@{message.from_user.username}", parse_mode="html", reply_markup=markup)
 
+#@bot.message_handler(chat_types=['private']) # You can add more chat types
+#def command_help(message):
+#    bot.send_message(message.chat.id, 'Private chat detected, sir!')
+                
+#Contest_Data.insert_one({'contest_num': contest_num, 'type': 'text', 'text': text, 'u_id': message.from_user.id})
 
 if __name__ == '__main__':
     ngrok_token = os.getenv('NGROK_TOKEN')
