@@ -109,16 +109,49 @@ def respuesta_botones_inline(call):
     u_name = call.from_user.username
 
     JUECES = {938816655, 1881435398, 5602408597, 5825765407, 1221472021, 873919300, 5963355323}
-
+    emojis = {"1": "1️⃣","2": "2️⃣","3": "3️⃣","4": "4️⃣","5": "5️⃣","6": "6️⃣","7": "7️⃣","8": "8️⃣","9": "9️⃣","10": "🔟"}
     if uid in JUECES:
         #Contest
+        
         def is_vote_contest(variable):
-            pattern = r"^contest_vote_(10|[1-9])$"
+            pattern = r"^contest_vote_(10|[1-9])_\d{8,11}_(0|1)$"
             return bool(re.match(pattern, variable))
 
+        # 0 => Photo, 1 => Text
         if is_vote_contest(call.data):
             partes = call.data.split("_")
-            bot.answer_callback_query(call.id, f"Has votado: {partes[2]}")
+
+            match partes[4]:
+                case "0":
+                    type = "photo"
+                case "1":
+                    type = "text"
+
+            contest = Contest_Data.find_one({'u_id': int(partes[3]), 'type': type})
+            if contest is None:
+                bot.answer_callback_query(call.id, f"No existe este documento...")
+                return
+            
+            if 'vote' in contest and str(uid) in contest['vote']:
+                bot.answer_callback_query(call.id, f"Votado actualizado de: {contest['vote'][str(uid)]} a {partes[2]}")
+            else:
+                bot.answer_callback_query(call.id, f"Has Votado: {partes[2]}")
+            msg = f"Foto de concurso:\nHas votado: {emojis[partes[2]]}"
+
+            markup = InlineKeyboardMarkup(row_width=5)
+            btns = []
+            for i in range(1, 11):
+                btn = InlineKeyboardButton(str(i), callback_data=f"contest_vote_{i}_{partes[3]}_{partes[4]}")
+                btns.append(btn)
+            markup.add(*btns)
+
+            bot.edit_message_caption(msg, cid, mid, reply_markup=markup)
+
+            Contest_Data.update_one(
+               {'u_id': int(partes[3]), 'type': type},
+               { "$set": { "vote." + str(uid): int(partes[2]) } }
+            )
+
             return
         #End contest
 
@@ -521,6 +554,17 @@ def endPollAdd(message, data):
         bot.register_next_step_handler(msg, endPollAdd, data)
 
 
+@bot.message_handler(commands=['res_con'])
+def res_con_command(message):
+    result = Contest_Data.find()
+    for doc in result:
+        votos = doc["vote"]
+        suma = sum(votos.values())
+        num = len(votos)
+        prom = (suma / num)
+        bot.send_message(message.chat.id, f"El promedio de los votos es {prom:.1f} de 10")
+
+
 @bot.message_handler(commands=['set_bio'])
 def set_bio_command(message):
     set_description(message)
@@ -918,7 +962,7 @@ def confirm_contest_photo(message, contest_num):
             markup = InlineKeyboardMarkup(row_width=5)
             btns = []
             for i in range(1, 11):
-                btn = InlineKeyboardButton(str(i), callback_data=f"contest_vote_{i}")
+                btn = InlineKeyboardButton(str(i), callback_data=f"contest_vote_{i}_{message.from_user.id}_0")
                 btns.append(btn)
             markup.add(*btns)
 
@@ -928,6 +972,8 @@ def confirm_contest_photo(message, contest_num):
                 msg = bot.send_message(message.chat.id, "Foto subida. Si se desuscribe esta foto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
                 if not content:
                     Contest_Data.insert_one({'contest_num': contest_num, 'type': 'photo', 'u_id': message.from_user.id})
+                else:
+                    Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'photo'}, {"$unset": {"vote": ""}})
                 bot.send_photo(-1001664356911, img, f"Foto de concurso:\n@{message.from_user.username}", parse_mode="html", reply_markup=markup)
 
 @bot.message_handler(chat_types=['private']) # You can add more chat types
@@ -971,7 +1017,7 @@ def confirm_contest_text(message, contest_num, text):
             markup = InlineKeyboardMarkup(row_width=5)
             btns = []
             for i in range(1, 11):
-                btn = InlineKeyboardButton(str(i), callback_data=f"contest_vote_{i}")
+                btn = InlineKeyboardButton(str(i), callback_data=f"contest_vote_{i}_{message.from_user.id}_1")
                 btns.append(btn)
             markup.add(*btns)
 
@@ -982,6 +1028,7 @@ def confirm_contest_text(message, contest_num, text):
                 msg = bot.send_message(message.chat.id, "Texto subido. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
                 bot.send_message(-1001664356911, f"Texto de concurso:\n@{message.from_user.username}\n\n{text}", parse_mode="html", reply_markup=markup)
             else:
+                Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'photo'}, {"$unset": {"vote": ""}})
                 Contest_Data.update_one({'u_id': message.from_user.id}, {"$set": {'text': text}})
                 msg = bot.send_message(message.chat.id, "Texto actualizado. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
                 bot.send_message(-1001664356911, f"Texto de concurso actualizado.\n@{message.from_user.username}:\n\n{text}", parse_mode="html", reply_markup=markup)
