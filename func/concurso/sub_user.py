@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from telebot.apihelper import ApiTelegramException
 import telebot
 import os
 
@@ -45,6 +46,15 @@ def del_user(user_id):
 def reg_user(user_id, username):
     users.insert_one({"user_id": user_id, "username": username})
 
+def send_data_contest(JUECES, text, markup, img=None):
+    for item in JUECES:
+        try:
+            if img:
+                bot.send_photo(item, img, text, parse_mode="html", reply_markup=markup)
+            else:
+                bot.send_message(item, text, parse_mode="html", reply_markup=markup)
+        except ApiTelegramException as err:
+            print(f"{err}, {item}")
 
 def subscribe_user(message):
     chat_id = message.chat.id

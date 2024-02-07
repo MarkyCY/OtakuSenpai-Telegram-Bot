@@ -52,7 +52,7 @@ from func.anilist.search_manga import show_manga
 from func.anilist.search_anime import show_anime
 from func.anilist.search_character import show_character
 #Concurso
-from func.concurso.sub_user import subscribe_user, unsubscribe_user
+from func.concurso.sub_user import subscribe_user, unsubscribe_user, send_data_contest
 #Evento
 from func.event import calvicia
 import json
@@ -90,6 +90,8 @@ model = genai.GenerativeModel('gemini-pro')
 #Cantidad de rows por página en paginación
 ROW_X_PAGE = int(os.getenv('ROW_X_PAGE'))
 
+JUECES = {938816655, 1881435398, 5602408597, 5825765407, 1221472021, 873919300, 5963355323}
+
 #Control de uso diario
 useControlMongoInc = useControlMongo()
 
@@ -108,7 +110,6 @@ def respuesta_botones_inline(call):
     uid = call.from_user.id
     u_name = call.from_user.username
 
-    JUECES = {938816655, 1881435398, 5602408597, 5825765407, 1221472021, 873919300, 5963355323}
     emojis = {"1": "1️⃣","2": "2️⃣","3": "3️⃣","4": "4️⃣","5": "5️⃣","6": "6️⃣","7": "7️⃣","8": "8️⃣","9": "9️⃣","10": "🔟"}
     if uid in JUECES:
         #Contest
@@ -562,7 +563,7 @@ def res_con_command(message):
         suma = sum(votos.values())
         num = len(votos)
         prom = (suma / num)
-        bot.send_message(message.chat.id, f"El promedio de los votos es {prom:.1f} de 10")
+        bot.send_message(message.chat.id, f"El promedio de votos para el participante {doc['u_id']}:\n es {prom:.1f} de 10")
 
 
 @bot.message_handler(commands=['set_bio'])
@@ -972,9 +973,10 @@ def confirm_contest_photo(message, contest_num):
                 msg = bot.send_message(message.chat.id, "Foto subida. Si se desuscribe esta foto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
                 if not content:
                     Contest_Data.insert_one({'contest_num': contest_num, 'type': 'photo', 'u_id': message.from_user.id})
+                    send_data_contest(JUECES, f"Foto de concurso:", markup, img)
                 else:
                     Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'photo'}, {"$unset": {"vote": ""}})
-                bot.send_photo(-1001664356911, img, f"Foto de concurso:\n@{message.from_user.username}", parse_mode="html", reply_markup=markup)
+                    send_data_contest(JUECES, f"Foto de concurso actualizada:", markup, img)
 
 @bot.message_handler(chat_types=['private']) # You can add more chat types
 def command_help(message):
@@ -1026,12 +1028,12 @@ def confirm_contest_text(message, contest_num, text):
             if not content:
                 Contest_Data.insert_one({'contest_num': contest_num, 'type': 'text', 'text': text, 'u_id': message.from_user.id})
                 msg = bot.send_message(message.chat.id, "Texto subido. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
-                bot.send_message(-1001664356911, f"Texto de concurso:\n@{message.from_user.username}\n\n{text}", parse_mode="html", reply_markup=markup)
+                send_data_contest(JUECES, f"Texto de concurso:\n\n{text}", markup)
             else:
                 Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'photo'}, {"$unset": {"vote": ""}})
                 Contest_Data.update_one({'u_id': message.from_user.id}, {"$set": {'text': text}})
                 msg = bot.send_message(message.chat.id, "Texto actualizado. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
-                bot.send_message(-1001664356911, f"Texto de concurso actualizado.\n@{message.from_user.username}:\n\n{text}", parse_mode="html", reply_markup=markup)
+                send_data_contest(JUECES, f"Texto de concurso actualizado:\n\n{text}", markup)
 
 
 #@bot.message_handler(commands=['start_play'])
