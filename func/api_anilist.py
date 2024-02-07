@@ -28,6 +28,10 @@ def search_anime(name):
         }
         status
         isAdult
+    	nextAiringEpisode {
+    		episode
+            airingAt
+    	}
       }
     }
     '''

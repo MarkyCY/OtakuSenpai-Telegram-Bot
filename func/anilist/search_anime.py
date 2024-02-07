@@ -3,6 +3,7 @@ from func.api_anilist import search_anime
 from deep_translator import GoogleTranslator
 from telebot.types import ReactionTypeEmoji
 import requests
+from datetime import datetime
 import re
 import telebot
 import os
@@ -22,6 +23,11 @@ bot = telebot.TeleBot(Token)
 
 source_language = 'auto'  # Auto detectar idioma de origen
 target_language = 'es'  # español
+
+def timestamp_conv(timestamp):
+    date = datetime.fromtimestamp(timestamp)
+    format = date.strftime("%d/%m/%Y")
+    return format
 
 def show_anime(message):
     cid = message.chat.id
@@ -51,6 +57,8 @@ def show_anime(message):
             episodes = anime['data']['Media']['episodes']
             status = anime['data']['Media']['status']
             isAdult = anime['data']['Media']['isAdult']
+            nextAiringEpisode = anime['data']['Media']['nextAiringEpisode']
+
             match isAdult:
                 case True:
                     adult = "Si"
@@ -80,6 +88,10 @@ def show_anime(message):
 <strong>Estado:</strong> {status}
 <strong>Para Adultos?:</strong> {adult}
 """
+            if nextAiringEpisode:
+                msg += f"""<strong>Próxima emisión:</strong>
+                Episodio <strong>{nextAiringEpisode['episode']}</strong> Emisión: <code>{timestamp_conv(nextAiringEpisode['airingAt'])}</code>\n"""
+
             #bot.send_message(cid, msg, parse_mode="html")
             bot.send_photo(cid, foto, msg, parse_mode="html", reply_to_message_id=message.message_id)
     else:
