@@ -109,7 +109,6 @@ def respuesta_botones_inline(call):
     mid = call.message.message_id
     uid = call.from_user.id
     u_name = call.from_user.username
-
     emojis = {"1": "1️⃣","2": "2️⃣","3": "3️⃣","4": "4️⃣","5": "5️⃣","6": "6️⃣","7": "7️⃣","8": "8️⃣","9": "9️⃣","10": "🔟"}
     if uid in JUECES:
         #Contest
@@ -137,7 +136,15 @@ def respuesta_botones_inline(call):
                 bot.answer_callback_query(call.id, f"Votado actualizado de: {contest['vote'][str(uid)]} a {partes[2]}")
             else:
                 bot.answer_callback_query(call.id, f"Has Votado: {partes[2]}")
-            msg = f"Foto de concurso:\nHas votado: {emojis[partes[2]]}"
+
+            msg = call.message.caption
+            name = call.from_user.first_name
+
+            if re.search(r'(' + re.escape(name) + r'\d+️⃣|' + re.escape(name) + r'🔟)', msg):
+                msg = re.sub(r'(' + re.escape(name) + r'\d+️⃣|' + re.escape(name) + r'🔟)', f'{name}{emojis[partes[2]]}', msg)
+            else:
+                msg += f'\n{name}{emojis[partes[2]]}'
+            #msg = f"Foto de concurso:\nHas votado: {emojis[partes[2]]}"
 
             markup = InlineKeyboardMarkup(row_width=5)
             btns = []
@@ -973,10 +980,12 @@ def confirm_contest_photo(message, contest_num):
                 msg = bot.send_message(message.chat.id, "Foto subida. Si se desuscribe esta foto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
                 if not content:
                     Contest_Data.insert_one({'contest_num': contest_num, 'type': 'photo', 'u_id': message.from_user.id})
-                    send_data_contest(JUECES, f"Foto de concurso:", markup, img)
+                    #send_data_contest(JUECES, f"Foto de concurso:\n\nVoto:\n", markup, img)
+                    bot.send_photo(-1001664356911, img, f"Foto de concurso:\n\nVoto:\n", parse_mode="html", reply_markup=markup)
                 else:
                     Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'photo'}, {"$unset": {"vote": ""}})
-                    send_data_contest(JUECES, f"Foto de concurso actualizada:", markup, img)
+                    #send_data_contest(JUECES, f"Foto de concurso actualizada:\n\nVoto:\n", markup, img)
+                    bot.send_photo(-1001664356911, img, f"Foto de concurso actualizada:\n\nVoto:\n", parse_mode="html", reply_markup=markup)
 
 @bot.message_handler(chat_types=['private']) # You can add more chat types
 def command_help(message):
@@ -1028,12 +1037,14 @@ def confirm_contest_text(message, contest_num, text):
             if not content:
                 Contest_Data.insert_one({'contest_num': contest_num, 'type': 'text', 'text': text, 'u_id': message.from_user.id})
                 msg = bot.send_message(message.chat.id, "Texto subido. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
-                send_data_contest(JUECES, f"Texto de concurso:\n\n{text}", markup)
+                #send_data_contest(JUECES, f"Texto de concurso:\n\n{text}\n\nVoto:\n", markup)
+                bot.send_message(-1001664356911, f"Texto de concurso:\n\n{text}\n\nVoto:\n", parse_mode="html", reply_markup=markup)
             else:
                 Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'photo'}, {"$unset": {"vote": ""}})
                 Contest_Data.update_one({'u_id': message.from_user.id}, {"$set": {'text': text}})
                 msg = bot.send_message(message.chat.id, "Texto actualizado. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
-                send_data_contest(JUECES, f"Texto de concurso actualizado:\n\n{text}", markup)
+                #send_data_contest(JUECES, f"Texto de concurso actualizado:\n\n{text}\n\nVoto:\n", markup)
+                bot.send_message(-1001664356911, f"Texto de concurso actualizado:\n\n{text}\n\nVoto:\n", parse_mode="html", reply_markup=markup)
 
 
 #@bot.message_handler(commands=['start_play'])
