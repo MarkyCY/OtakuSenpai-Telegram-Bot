@@ -32,6 +32,7 @@ def search_anime(name):
     		episode
             airingAt
     	}
+    	genres
       }
     }
     '''
@@ -79,6 +80,7 @@ def search_manga(name):
         }
         status
         isAdult
+        genres
       }
     }
     '''

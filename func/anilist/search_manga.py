@@ -50,6 +50,7 @@ def show_manga(message):
 
             status = manga['data']['Media']['status']
             isAdult = manga['data']['Media']['isAdult']
+            genres = manga['data']['Media']['genres']
             match isAdult:
                 case True:
                     adult = "Si"
@@ -59,18 +60,22 @@ def show_manga(message):
                     adult = "Desconocido"
 
             html_regex = re.compile(r'<[^>]+>')
-            tr_description = re.sub(html_regex, '', manga['data']['Media']['description'])
+            if manga['data']['Media']['description'] is not None:
+                tr_description = re.sub(html_regex, '', manga['data']['Media']['description'])
+            else:
+                tr_description = "No description."
             description = GoogleTranslator(source=source_language, target=target_language).translate(tr_description)
 
             image = manga['data']['Media']['coverImage']['large']
             res = requests.get(image)
             print(res.status_code, cid)
-            with open("./file/" + name + ".jpg", 'wb') as out:
+            with open("./file/" + name[:10] + ".jpg", 'wb') as out:
                 out.write(res.content)
-            foto = open("./file/" + name + ".jpg", "rb")
+            foto = open("./file/" + name[:10] + ".jpg", "rb")
 
             msg = f"""
 <strong>{name}</strong> 
+<code>{', '.join(genres)}</code>
 <strong>Descripción:</strong>
 {description}
 

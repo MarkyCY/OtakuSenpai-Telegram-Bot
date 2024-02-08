@@ -58,6 +58,7 @@ def show_anime(message):
             status = anime['data']['Media']['status']
             isAdult = anime['data']['Media']['isAdult']
             nextAiringEpisode = anime['data']['Media']['nextAiringEpisode']
+            genres = anime['data']['Media']['genres']
 
             match isAdult:
                 case True:
@@ -79,6 +80,7 @@ def show_anime(message):
 
             msg = f"""
 <strong>{name}</strong> 
+<code>{', '.join(genres)}</code>
 <strong>Duración de cada Cap:</strong> {duration} min
 <strong>Episodios:</strong> {episodes}
 
@@ -89,8 +91,7 @@ def show_anime(message):
 <strong>Para Adultos?:</strong> {adult}
 """
             if nextAiringEpisode:
-                msg += f"""<strong>Próxima emisión:</strong>
-                Episodio <strong>{nextAiringEpisode['episode']}</strong> Emisión: <code>{timestamp_conv(nextAiringEpisode['airingAt'])}</code>\n"""
+                msg += f"\n<strong>Próxima emisión:</strong>\nEpisodio <strong>{nextAiringEpisode['episode']}</strong> Emisión: <code>{timestamp_conv(nextAiringEpisode['airingAt'])}</code>\n"
 
             #bot.send_message(cid, msg, parse_mode="html")
             bot.send_photo(cid, foto, msg, parse_mode="html", reply_to_message_id=message.message_id)
