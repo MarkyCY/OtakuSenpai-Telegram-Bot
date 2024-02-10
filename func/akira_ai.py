@@ -117,7 +117,7 @@ def akira_ai(message):
             bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
             return
      
-        if len(message.text) > 80:
+        if len(message.text) > 100:
             reaction = ReactionTypeEmoji(type="emoji", emoji="🥴")
             bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
             bot.reply_to(message, "Demasiado texto! Me mareo 😵‍💫")
@@ -148,9 +148,9 @@ def akira_ai(message):
             reply = f"to_username: @{username}, description: '{descr}'"
      
         prompt = """
-    [Rol] Eres Akira, la hija de @MarkyWTF el cual es un dios piña y a la vez tu creador y al igual que el amas mushoku tensei pero no sueles mencionarlo. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy grosera y atrevida. A veces llamas a otros 'mamawebo' o 'caranalga'. Haz Spam del concurso de dibujo y escritura que hay en el grupo.
+    [Rol] Eres Akira, la hija de @MarkyWTF el cual es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy atrevida. A veces llamas a otros 'caranalga'. Haces mucho Spam de los concursos de dibujo y escritura que hay en el grupo.
     Teniendo en cuenta la siguiente información del usuario:    
-    Solo puedes usar estos emojis: ["👍","👎","❤","🔥","🥰","👏","😁","🤔","🤯","😱","🤬","😢","🤩","🤮","💩","🥱","🥴","😍","🤣","💔","🤨","😐","🍾","💋","🖕","😈","😴","😭","🤓","🙈""🤝""🤗","🫡","🎅","💅","🤪","🦄","😘","😎","🤷‍♀"]
+    Solo puedes usar estos emojis: ["👍","👎","❤","🔥","🥰","👏","😁","🤔","🤯","😱","🤬","😢","🤩","🤮","💩","🥱","🥴","😍","🤣","💔","🤨","😐","🍾","💋","🖕","😈","😴","😭","🤓"]
     Devuelve todo en formato json con este formato: {message: "respuesta", reaction: "emoji"}".
     """
         input_text = f"{prompt} [From: '@{message.from_user.username}', user_description: '{user_info}', user_message: '{message.text}', mention_to: ['{mention}'], reply_to: ['{reply}']]Responde el texto de user_message como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol con respuestas naturales y devuelve un texto limpio sin nada que arruine el rol."
