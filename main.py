@@ -564,6 +564,7 @@ def endPollAdd(message, data):
 
 @bot.message_handler(commands=['res_con'])
 def res_con_command(message):
+    bot.send_message(-1001485529816, "calvos", message_thread_id=253659)
     result = Contest_Data.find()
     for doc in result:
         votos = doc["vote"]
@@ -1109,6 +1110,10 @@ def handle_message(message):
             bot.send_message(message.chat.id, 'Lo siento solo puedo ser usada en <a href="https://t.me/OtakuSenpai2020">Otaku Senpai</a>', parse_mode="HTML")
             bot.leave_chat(message.chat.id)
             return
+    
+    spam_contest = random.randint(1, 40)
+    if spam_contest == 3:
+        bot.reply_to(message, "Hey ya estás participando en los concursos?\nhttps://t.me/OtakuSenpai2020/251766/1146999")
     
     #Triggers
     if message.chat.type in ['group', 'supergroup']:
