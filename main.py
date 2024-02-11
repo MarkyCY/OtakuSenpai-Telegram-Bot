@@ -562,16 +562,22 @@ def endPollAdd(message, data):
         bot.register_next_step_handler(msg, endPollAdd, data)
 
 
-@bot.message_handler(commands=['res_con'])
+@bot.message_handler(commands=['subs'])
 def res_con_command(message):
-    bot.send_message(-1001485529816, "calvos", message_thread_id=253659)
-    result = Contest_Data.find()
-    for doc in result:
-        votos = doc["vote"]
-        suma = sum(votos.values())
-        num = len(votos)
-        prom = (suma / num)
-        bot.send_message(message.chat.id, f"El promedio de votos para el participante {doc['u_id']}:\n es {prom:.1f} de 10")
+    res = contest.find_one({'contest_num': 1})
+    text = "Suscriptores\n"
+    for val in res['subscription']:
+        chat_member = bot.get_chat_member(-1001485529816, val['user'])
+        text += f"\n<a href='tg://user?id={val['user']}'>{chat_member.user.first_name}</a>" 
+
+    bot.reply_to(message, text, parse_mode="html")
+    #result = Contest_Data.find()
+    #for doc in result:
+    #    votos = doc["vote"]
+    #    suma = sum(votos.values())
+    #    num = len(votos)
+    #    prom = (suma / num)
+    #    bot.send_message(message.chat.id, f"El promedio de votos para el participante {doc['u_id']}:\n es {prom:.1f} de 10")
 
 
 @bot.message_handler(commands=['set_bio'])
@@ -980,13 +986,18 @@ def confirm_contest_photo(message, contest_num):
             with PIL.Image.open(f'func/concurso/{message.from_user.id}.jpg') as img:
                 msg = bot.send_message(message.chat.id, "Foto subida. Si se desuscribe esta foto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
                 if not content:
-                    Contest_Data.insert_one({'contest_num': contest_num, 'type': 'photo', 'u_id': message.from_user.id})
                     #send_data_contest(JUECES, f"Foto de concurso:\n\nVoto:\n", markup, img)
-                    bot.send_photo(-1001664356911, img, f"Foto de concurso:\n\nVoto:\n", parse_mode="html", reply_markup=markup)
+                    msg = bot.send_photo(-1001664356911, img, f"Foto de concurso:\n\nVoto:\n", parse_mode="html", reply_markup=markup, message_thread_id=53628)
+                    Contest_Data.insert_one({'contest_num': contest_num, 'type': 'photo', 'u_id': message.from_user.id, 'm_id': msg.message_id})
                 else:
-                    Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'photo'}, {"$unset": {"vote": ""}})
+                    try:
+                        bot.delete_message(-1001664356911, content['m_id'])
+                    except ApiTelegramException as e:
+                        print(e)
                     #send_data_contest(JUECES, f"Foto de concurso actualizada:\n\nVoto:\n", markup, img)
-                    bot.send_photo(-1001664356911, img, f"Foto de concurso actualizada:\n\nVoto:\n", parse_mode="html", reply_markup=markup)
+                    msg = bot.send_photo(-1001664356911, img, f"Foto de concurso actualizada:\n\nVoto:\n", parse_mode="html", reply_markup=markup, message_thread_id=53628)
+                    Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'photo'}, {"$unset": {"vote": ""}})
+                    Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'photo'}, {"$set": {'m_id': msg.message_id}})
 
 @bot.message_handler(chat_types=['private']) # You can add more chat types
 def command_help(message):
@@ -1036,16 +1047,19 @@ def confirm_contest_text(message, contest_num, text):
             content = Contest_Data.find_one({'u_id': message.from_user.id, 'type': 'text'})     
                 
             if not content:
-                Contest_Data.insert_one({'contest_num': contest_num, 'type': 'text', 'text': text, 'u_id': message.from_user.id})
-                msg = bot.send_message(message.chat.id, "Texto subido. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
+                bot.send_message(message.chat.id, "Texto subido. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
                 #send_data_contest(JUECES, f"Texto de concurso:\n\n{text}\n\nVoto:\n", markup)
-                bot.send_message(-1001664356911, f"Texto de concurso:\n\n{text}\n\nVoto:\n", parse_mode="html", reply_markup=markup)
+                msg = bot.send_message(-1001664356911, f"Texto de concurso:\n\n{text}\n\nVoto:\n", parse_mode="html", reply_markup=markup, message_thread_id=53628)
+                Contest_Data.insert_one({'contest_num': contest_num, 'type': 'text', 'text': text, 'u_id': message.from_user.id, 'm_id': msg.message_id})
             else:
-                Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'photo'}, {"$unset": {"vote": ""}})
-                Contest_Data.update_one({'u_id': message.from_user.id}, {"$set": {'text': text}})
-                msg = bot.send_message(message.chat.id, "Texto actualizado. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
-                #send_data_contest(JUECES, f"Texto de concurso actualizado:\n\n{text}\n\nVoto:\n", markup)
-                bot.send_message(-1001664356911, f"Texto de concurso actualizado:\n\n{text}\n\nVoto:\n", parse_mode="html", reply_markup=markup)
+                bot.send_message(message.chat.id, "Texto actualizado. Si se desuscribe este texto se eliminará de la base de datos del concurso.", reply_markup=ReplyKeyboardRemove())
+                try:
+                    bot.delete_message(-1001664356911, content['m_id'])
+                except ApiTelegramException as e:
+                    print(e)
+                msg = bot.send_message(-1001664356911, f"Texto de concurso actualizado:\n\n{text}\n\nVoto:\n", parse_mode="html", reply_markup=markup, message_thread_id=53628)
+                Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'text'}, {"$unset": {"vote": ""}})
+                Contest_Data.update_one({'u_id': message.from_user.id, 'type': 'text'}, {"$set": {'text': text, 'm_id': msg.message_id}})
 
 
 #@bot.message_handler(commands=['start_play'])
@@ -1113,7 +1127,7 @@ def handle_message(message):
     
     spam_contest = random.randint(1, 40)
     if spam_contest == 3:
-        bot.reply_to(message, "Hey ya estás participando en los concursos?\nhttps://t.me/OtakuSenpai2020/251766/1146999")
+        bot.reply_to(message, "Hey! ¿Ya estás participando en los concursos de dibujo y escritura?\nhttps://t.me/OtakuSenpai2020/251766/1146999")
     
     #Triggers
     if message.chat.type in ['group', 'supergroup']:
