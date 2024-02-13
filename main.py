@@ -1125,7 +1125,7 @@ def handle_message(message):
             bot.leave_chat(message.chat.id)
             return
     
-    spam_contest = random.randint(1, 40)
+    spam_contest = random.randint(1, 60)
     if spam_contest == 3:
         bot.reply_to(message, "Hey! ¿Ya estás participando en los concursos de dibujo y escritura?\nhttps://t.me/OtakuSenpai2020/251766/1146999")
     
