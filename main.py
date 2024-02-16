@@ -37,6 +37,8 @@ from func.reverse import reverse
 from func.afk import set_afk
 from func.set_bio import set_description
 from func.useControl import useControlMongo
+#VideoGames
+from func.videogamedb.api_videogame import search_game, get_game
 #Anime and manga gestion
 from func.anime import *
 #Inline Query
@@ -108,11 +110,29 @@ def respuesta_botones_inline(call):
     cid = call.message.chat.id
     mid = call.message.message_id
     uid = call.from_user.id
-    u_name = call.from_user.username
+
+    #Search VideoGame
+    def is_search_vg(variable):
+            pattern = r"^videogame_(\d+)$"
+            return bool(re.match(pattern, variable))
+    
+    if is_search_vg(call.data):
+        if not call.message.reply_to_message:
+            bot.answer_callback_query(call.id, "No se encontró el reply del mensaje.")
+            bot.delete_message(cid, mid)
+            return
+        if call.message.reply_to_message.from_user.id != uid:
+            bot.answer_callback_query(call.id, "Tu no pusiste este comando...")
+            return
+        parts = call.data.split("_")
+        get_game(bot, cid, mid, parts[1])
+        return
+
+
+    #Contest
     emojis = {"1": "1️⃣","2": "2️⃣","3": "3️⃣","4": "4️⃣","5": "5️⃣","6": "6️⃣","7": "7️⃣","8": "8️⃣","9": "9️⃣","10": "🔟"}
     if uid in JUECES:
-        #Contest
-        
+
         def is_vote_contest(variable):
             pattern = r"^contest_vote_(10|[1-9])_\d{8,11}_(0|1)$"
             return bool(re.match(pattern, variable))
@@ -162,24 +182,7 @@ def respuesta_botones_inline(call):
 
             return
         #End contest
-
-    #    #Game Paint
-    #def is_valid_to_join(variable):
-    #    pattern = r"join_[a-zA-Z\d]{5}$"
-    #    return bool(re.match(pattern, variable))
-    #if is_valid_to_join(call.data):
-    #    gartic_counter = Gartic.count_documents({})
-    #    if gartic_counter > 15:
-    #        bot.answer_callback_query(call.id, f"Ya dejen el abuso, es más, no hay mas pruebas hastas que despierte mi papá!")
-    #        return
-    #    partes = call.data.split("_")
-    #    code = partes[1]
-    #    bot.answer_callback_query(call.id, f"El codigo eh: {code}")
-    #    bot.send_message(call.from_user.id, f"Supuestamente te has unido a la sala: {code}")
-    #    bot.send_message(call.message.chat.id, f'El usuario <a href="tg://user?id={call.from_user.id}">{call.from_user.first_name}</a> se ha unido a la sala...', parse_mode="html", message_thread_id=call.message.message_thread_id)
-    #    Gartic.insert_one({ "prueba": "prueba" })
-    #    return
-    #
+    
     chat_member = bot.get_chat_member(cid, uid)
     isadmin = isAdmin(uid)
 
@@ -257,6 +260,7 @@ def respuesta_botones_inline(call):
         return
     
 
+    #Triggers and Blacklist
     def is_valid_blackword(variable):
         pattern = r"^bw_[a-f\d]{24}$"
         return bool(re.match(pattern, variable))
@@ -279,7 +283,6 @@ def respuesta_botones_inline(call):
         time.sleep(5)
         bot.delete_message(cid, msg.message_id)
         return
-
 
     def is_valid_to_edit(variable):
         pattern = r"^[a-f\d]{24}_\d$"
@@ -409,6 +412,10 @@ def command_info(message):
     info(message)
     
 
+@bot.message_handler(commands=['game'])
+def anime(message):
+    search_game(bot, message)
+
 @bot.message_handler(commands=['anime'])
 def anime(message):
     reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
@@ -431,6 +438,8 @@ def character(message):
 
 @bot.message_handler(commands=['sub'])
 def command_to_subscribe(message):
+    bot.reply_to(message, "Suscripciones Cerradas.")
+    return
     if message.chat.type == 'private':
         subscribe_user(message)
 
@@ -578,6 +587,23 @@ def res_con_command(message):
     #    num = len(votos)
     #    prom = (suma / num)
     #    bot.send_message(message.chat.id, f"El promedio de votos para el participante {doc['u_id']}:\n es {prom:.1f} de 10")
+
+
+#@bot.message_handler(commands=['send_spm'])
+#def send_msg_contest(message):
+#    msg = """
+#¡Saludos, queridos mamawebos y feliz San Valentín! Ya finalizaron las suscripciones al concurso 🌚. Pueden hacer entrega de sus majestuosas obras. Estas son las pautas:
+#
+#Para el dibujo: Envíame la imagen a mí @Akira_Senpai_bot y te preguntaré si es para el concurso. ¡Solo debes confirma y listo! ✨
+#
+#Para el tema de escritura:  Debes enviarme el texto (formato de texto nada de imagenes). Recuerda, son mínimo 200 palabras✍🏻. Sabrás que todo está correcto cuando te pregunte si es para el concurso.
+#
+#¿Ya vieron qué fácil?✨ ¡La fecha límite de entrega es hasta el 25/02/2024!✨
+#"""
+#    res = contest.find_one({'contest_num': 1})
+#    for val in res['subscription']:
+#        id = val['user']
+#        bot.send_message(id, msg)
 
 
 @bot.message_handler(commands=['set_bio'])
@@ -1125,10 +1151,6 @@ def handle_message(message):
             bot.leave_chat(message.chat.id)
             return
     
-    spam_contest = random.randint(1, 60)
-    if spam_contest == 3:
-        bot.reply_to(message, "Hey! ¿Ya estás participando en los concursos de dibujo y escritura?\nhttps://t.me/OtakuSenpai2020/251766/1146999")
-    
     #Triggers
     if message.chat.type in ['group', 'supergroup']:
         blackwords = []
@@ -1244,6 +1266,7 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/start", "..."),
         telebot.types.BotCommand("/anime", "Buscar información sobre un anime"),
         telebot.types.BotCommand("/manga", "Buscar información sobre un manga"),
+        telebot.types.BotCommand("/game", "Buscar información sobre videojuegos"),
         telebot.types.BotCommand("/character", "Buscar información sobre un personaje"),
         telebot.types.BotCommand("/afk", "Modo afk"),
         telebot.types.BotCommand("/steal", "Obtener Stickers"),
