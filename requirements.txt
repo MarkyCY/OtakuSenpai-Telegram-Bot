@@ -1,7 +1,6 @@
 pymongo
 python-dotenv
 telebot
-requests
 graphqlclient
 APScheduler
 pytz
