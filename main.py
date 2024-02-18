@@ -50,9 +50,9 @@ from func.admin.unban import unban_user
 from func.admin.unmute import unmute_user
 from func.admin.mute import mute_user
 #Api Anilist Use
-from func.anilist.search_manga import show_manga
-from func.anilist.search_anime import show_anime
-from func.anilist.search_character import show_character
+from func.anilist.search_manga import show_manga, search_mangas
+from func.anilist.search_anime import show_anime, search_animes
+from func.anilist.search_character import show_character, search_characters
 #Concurso
 from func.concurso.sub_user import subscribe_user, unsubscribe_user, send_data_contest
 #Evento
@@ -116,6 +116,18 @@ def respuesta_botones_inline(call):
             pattern = r"^videogame_(\d+)$"
             return bool(re.match(pattern, variable))
     
+    def is_search_anime(variable):
+            pattern = r"^show_anime_(\d+)$"
+            return bool(re.match(pattern, variable))
+    
+    def is_search_manga(variable):
+            pattern = r"^show_manga_(\d+)$"
+            return bool(re.match(pattern, variable))
+    
+    def is_search_character(variable):
+            pattern = r"^show_character_(\d+)$"
+            return bool(re.match(pattern, variable))
+    
     if is_search_vg(call.data):
         if not call.message.reply_to_message:
             bot.answer_callback_query(call.id, "No se encontró el reply del mensaje.")
@@ -126,6 +138,42 @@ def respuesta_botones_inline(call):
             return
         parts = call.data.split("_")
         get_game(bot, cid, mid, parts[1])
+        return
+    
+    if is_search_anime(call.data):
+        if not call.message.reply_to_message:
+            bot.answer_callback_query(call.id, "No se encontró el reply del mensaje.")
+            bot.delete_message(cid, mid)
+            return
+        if call.message.reply_to_message.from_user.id != uid:
+            bot.answer_callback_query(call.id, "Tu no pusiste este comando...")
+            return
+        parts = call.data.split("_")
+        show_anime(cid, mid, parts[2])
+        return
+    
+    if is_search_manga(call.data):
+        if not call.message.reply_to_message:
+            bot.answer_callback_query(call.id, "No se encontró el reply del mensaje.")
+            bot.delete_message(cid, mid)
+            return
+        if call.message.reply_to_message.from_user.id != uid:
+            bot.answer_callback_query(call.id, "Tu no pusiste este comando...")
+            return
+        parts = call.data.split("_")
+        show_manga(cid, mid, parts[2])
+        return
+    
+    if is_search_character(call.data):
+        if not call.message.reply_to_message:
+            bot.answer_callback_query(call.id, "No se encontró el reply del mensaje.")
+            bot.delete_message(cid, mid)
+            return
+        if call.message.reply_to_message.from_user.id != uid:
+            bot.answer_callback_query(call.id, "Tu no pusiste este comando...")
+            return
+        parts = call.data.split("_")
+        show_character(cid, mid, parts[2])
         return
 
 
@@ -420,20 +468,20 @@ def anime(message):
 def anime(message):
     reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
     bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
-    show_anime(message)
+    search_animes(message)
 
 
 @bot.message_handler(commands=['manga'])
 def manga(message):
     reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
     bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
-    show_manga(message)
+    search_mangas(message)
 
 @bot.message_handler(commands=['character'])
 def character(message):
     reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
     bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
-    show_character(message)
+    search_characters(message)
 
 
 @bot.message_handler(commands=['sub'])
