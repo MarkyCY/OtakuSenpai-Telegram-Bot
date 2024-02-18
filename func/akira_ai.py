@@ -162,15 +162,14 @@ def akira_ai(message):
             response = model.generate_content(input_text)
             parts = response.parts
             if parts:
-                print(f"response Parts: {response.parts}")
                 response = response.candidates[0].content.parts[0].text
             else:
-                print(f"response Text: {response.text}")
                 response = response.text
 
         except Exception as e:
             bot.reply_to(message, "Lo siento no puedo atenderte ahora", parse_mode='HTML')
             print(f"An error occurred: {e}")
+            print(f"feedback: {response.prompt_feedback}")
             return
         reaction = ReactionTypeEmoji(type="emoji", emoji="👨‍💻")
         bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
@@ -183,15 +182,11 @@ def akira_ai(message):
         end_index = response.rfind('}')
         # Extrae la parte JSON de la cadena
         json_part = response[start_index:end_index + 1]
-        print(f"json_part {json_part}")
         # Carga la cadena JSON a un diccionario en Python
         dict_object = json.loads(json_part)
-        print(f"dict_object {dict_object}")
      
         text = dict_object["message"]
-        print(f"Text: {text}")
         reaction_emoji = dict_object["reaction"]
-        print(f"Reaction: {reaction_emoji}")
         try:
             msg = bot.reply_to(message, text, parse_mode='HTML')
 
@@ -202,7 +197,7 @@ def akira_ai(message):
             useControlMongoInc.reg_use(user_id)
                      
         except ApiTelegramException as err:
-            #print(err)
+            print(err)
             reaction = ReactionTypeEmoji(type="emoji", emoji="💅")
             bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
             return
