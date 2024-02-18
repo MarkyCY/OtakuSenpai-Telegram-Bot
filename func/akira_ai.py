@@ -202,7 +202,7 @@ def akira_ai(message):
             useControlMongoInc.reg_use(user_id)
                      
         except ApiTelegramException as err:
-            print(err)
+            #print(err)
             reaction = ReactionTypeEmoji(type="emoji", emoji="💅")
             bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
             return
