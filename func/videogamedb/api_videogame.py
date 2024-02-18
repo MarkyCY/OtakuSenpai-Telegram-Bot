@@ -41,7 +41,7 @@ def search_game(bot, message):
     markup.add(*btns)
 
 
-    bot.reply_to(message, 'Estos son los resultados:', reply_markup=markup)
+    bot.reply_to(message, 'Estos son los resultados de la busqueda de videojuegos:', reply_markup=markup)
 
 
 
