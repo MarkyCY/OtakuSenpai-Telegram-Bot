@@ -1,7 +1,7 @@
 from pymongo import MongoClient
-from func.api_anilist import search_manga
+from func.api_anilist import search_manga, search_manga_id
 from deep_translator import GoogleTranslator
-from telebot.types import ReactionTypeEmoji
+from telebot.types import ReactionTypeEmoji, InlineKeyboardMarkup, InlineKeyboardButton, LinkPreviewOptions
 import requests
 import re
 import telebot
@@ -23,57 +23,62 @@ target_language = 'es'  # español
 Token = os.getenv('BOT_API')
 bot = telebot.TeleBot(Token)
 
-def show_manga(message):
-    cid = message.chat.id
-    if len(message.text.split(' ')) > 1:
-        print('Haciendo Solicitud a la api')
-        referral_all = message.text.split(" ")
-        manga_name = " ".join(referral_all[1:])
-        manga = search_manga(manga_name)
-        if 'errors' in manga:
-            reaction = ReactionTypeEmoji(type="emoji", emoji="🤷‍♀")
-            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction])
 
-            for error in manga['errors']:
-                match error['message']:
-                    case "Not Found.":
-                        bot.reply_to(message, f"Manga no encontrado 😣")
-                    case _:
-                        bot.reply_to(message, error['message'])
+def search_mangas(message):
+    if len(message.text.split(' ')) <= 1:
+        bot.reply_to(message, f"Debes poner el nombre del manga luego de /manga")
+        return
+    
+    print('Haciendo Solicitud a la api')
+    referral_all = message.text.split(" ")
+    anime_name = " ".join(referral_all[1:])
+    anime = search_manga(anime_name)
+     
+    markup = InlineKeyboardMarkup(row_width=1)
+    btns = []
+    for res in anime['data']['Page']['media'][:min(len(anime['data']['Page']['media']), 8)]:
+        if res['title']['english'] is not None:
+            title = res['title']['english']
         else:
-            reaction = ReactionTypeEmoji(type="emoji", emoji="⚡")
-            bot.set_message_reaction(message.chat.id, message.message_id, reaction=[reaction], is_big=True)
+            title = res['title']['romaji']
 
-            name = manga['data']['Media']['title']['english']
-            if (name is None):
-                name = manga['data']['Media']['title']['romaji']
+        btn = InlineKeyboardButton(str(title), callback_data=f"show_manga_{res['id']}")
+        btns.append(btn)
+    markup.add(*btns)
 
-            status = manga['data']['Media']['status']
-            isAdult = manga['data']['Media']['isAdult']
-            genres = manga['data']['Media']['genres']
-            match isAdult:
-                case True:
-                    adult = "Si"
-                case False:
-                    adult = "No"
-                case _:
-                    adult = "Desconocido"
+    bot.reply_to(message, 'Estos son los resultados de la busqueda de mangas:', reply_markup=markup)
 
-            html_regex = re.compile(r'<[^>]+>')
-            if manga['data']['Media']['description'] is not None:
-                tr_description = re.sub(html_regex, '', manga['data']['Media']['description'])
-            else:
-                tr_description = "No description."
-            description = GoogleTranslator(source=source_language, target=target_language).translate(tr_description)
 
+def show_manga(chat_id, message_id, id):
+        manga = search_manga_id(id)
+        name = manga['data']['Media']['title']['english']
+        if (name is None):
+            name = manga['data']['Media']['title']['romaji']
+         
+        status = manga['data']['Media']['status']
+        isAdult = manga['data']['Media']['isAdult']
+        genres = manga['data']['Media']['genres']
+        match isAdult:
+            case True:
+                adult = "Si"
+            case False:
+                adult = "No"
+            case _:
+                adult = "Desconocido"
+             
+        html_regex = re.compile(r'<[^>]+>')
+        if manga['data']['Media']['description'] is not None:
+            tr_description = re.sub(html_regex, '', manga['data']['Media']['description'])
+        else:
+            tr_description = "No description."
+        description = GoogleTranslator(source=source_language, target=target_language).translate(tr_description)
+
+        if manga['data']['Media']['bannerImage'] is not None:
+            image = manga['data']['Media']['bannerImage']
+        else:
             image = manga['data']['Media']['coverImage']['large']
-            res = requests.get(image)
-            print(res.status_code, cid)
-            with open("./file/" + name[:10] + ".jpg", 'wb') as out:
-                out.write(res.content)
-            foto = open("./file/" + name[:10] + ".jpg", "rb")
-
-            msg = f"""
+             
+        msg = f"""
 <strong>{name}</strong> 
 <code>{', '.join(genres)}</code>
 <strong>Descripción:</strong>
@@ -82,7 +87,10 @@ def show_manga(message):
 <strong>Estado:</strong> {status}
 <strong>Para Adultos?:</strong> {adult}
 """
-        
-            bot.send_photo(cid, foto, msg, parse_mode="html", reply_to_message_id=message.message_id)
-    else:
-        bot.reply_to(message, f"Debes poner el nombre del manga luego de /manga")
+
+        if image is not None:
+            link_preview_options = LinkPreviewOptions(url=image, prefer_large_media=True, show_above_text=True)
+        else:
+            link_preview_options = LinkPreviewOptions(is_disabled=True)
+
+        bot.edit_message_text(msg, chat_id, message_id, parse_mode="html", link_preview_options=link_preview_options)
