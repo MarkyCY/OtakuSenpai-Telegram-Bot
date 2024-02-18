@@ -160,11 +160,12 @@ def akira_ai(message):
      
         try:
             response = model.generate_content(input_text)
-            print(response.parts)
             parts = response.parts
             if parts:
+                print(f"response Parts: {response.parts}")
                 response = response.candidates[0].content.parts[0].text
             else:
+                print(f"response Text: {response.text}")
                 response = response.text
 
         except Exception as e:
@@ -186,7 +187,9 @@ def akira_ai(message):
         dict_object = json.loads(json_part)
      
         text = dict_object["message"]
+        print(f"Text: {text}")
         reaction_emoji = dict_object["reaction"]
+        print(f"Reaction: {reaction_emoji}")
         try:
             msg = bot.reply_to(message, text, parse_mode='HTML')
 
