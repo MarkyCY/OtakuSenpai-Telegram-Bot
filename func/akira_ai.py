@@ -183,8 +183,10 @@ def akira_ai(message):
         end_index = response.rfind('}')
         # Extrae la parte JSON de la cadena
         json_part = response[start_index:end_index + 1]
+        print(f"json_part {json_part}")
         # Carga la cadena JSON a un diccionario en Python
         dict_object = json.loads(json_part)
+        print(f"dict_object {dict_object}")
      
         text = dict_object["message"]
         print(f"Text: {text}")
