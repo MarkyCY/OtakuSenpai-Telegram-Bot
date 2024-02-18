@@ -5,10 +5,57 @@ url = 'https://graphql.anilist.co'
 
 client = GraphQLClient(url)
 
+
 def search_anime(name):
     query = '''
-    query ($search: String) {
-      Media(search: $search, type: ANIME) {
+    query ($page: Int, $perPage: Int, $search: String) {
+    Page (page: $page, perPage: $perPage) {
+        pageInfo {
+            total
+            currentPage
+            lastPage
+            hasNextPage
+            perPage
+        }
+    media (search: $search, type: ANIME) {
+        id
+        title {
+            romaji
+        	english
+        	native
+            }
+    	}
+    }
+}
+    '''
+
+    variables = {
+        'search': name,
+        "page": 1,
+        "perPage": 8
+    }
+
+    # headers = {
+    #    'Authorization': f'Bearer {api_key}'
+    # }
+
+    # Envía la solicitud a la API de AniList
+    try:
+        response = requests.post(
+            url, json={'query': query, 'variables': variables})
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as error:
+        print(f"Error al realizar la solicitud: {error}")
+    except requests.exceptions.RequestException as error:
+        print(f"Error de red: {error}")
+
+    return response.json()
+
+def search_anime_id(id):
+    query = '''
+    query ($id: Int) {
+      Media(id: $id, type: ANIME) {
         id
         title {
             romaji
@@ -19,6 +66,7 @@ def search_anime(name):
         coverImage {
             large
         }
+        bannerImage
         duration
         episodes
         endDate {
@@ -38,7 +86,7 @@ def search_anime(name):
     '''
 
     variables = {
-        'search': name
+        'id': id
     }
 
     #headers = {
@@ -60,8 +108,55 @@ def search_anime(name):
 
 def search_manga(name):
     query = '''
-    query ($search: String) {
-      Media(search: $search, type: MANGA) {
+    query ($page: Int, $perPage: Int, $search: String) {
+    Page (page: $page, perPage: $perPage) {
+        pageInfo {
+            total
+            currentPage
+            lastPage
+            hasNextPage
+            perPage
+        }
+    media (search: $search, type: MANGA) {
+        id
+        title {
+            romaji
+        	english
+        	native
+            }
+    	}
+    }
+}
+    '''
+
+    variables = {
+        'search': name,
+        "page": 1,
+        "perPage": 8
+    }
+
+    # headers = {
+    #    'Authorization': f'Bearer {api_key}'
+    # }
+
+    # Envía la solicitud a la API de AniList
+    try:
+        response = requests.post(
+            url, json={'query': query, 'variables': variables})
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as error:
+        print(f"Error al realizar la solicitud: {error}")
+    except requests.exceptions.RequestException as error:
+        print(f"Error de red: {error}")
+
+    return response.json()
+
+
+def search_manga_id(id):
+    query = '''
+    query ($id: Int) {
+      Media(id: $id, type: MANGA) {
         id
         title {
             romaji
@@ -72,6 +167,7 @@ def search_manga(name):
         coverImage {
             large
         }
+        bannerImage
         popularity
         endDate {
             year
@@ -86,29 +182,78 @@ def search_manga(name):
     '''
 
     variables = {
-        'search': name
+        'id': id
     }
 
-    #headers = {
+    # headers = {
     #    'Authorization': f'Bearer {api_key}'
-    #}
+    # }
 
     # Envía la solicitud a la API de AniList
     try:
-        response = requests.post(url, json={'query': query, 'variables': variables})
+        response = requests.post(
+            url, json={'query': query, 'variables': variables})
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as error:
         print(f"Error al realizar la solicitud: {error}")
     except requests.exceptions.RequestException as error:
         print(f"Error de red: {error}")
-    
+
     return response.json()
+
+
 
 def searchCharacter(name):
     query = '''
-    query ($search: String) {
-      Character(search: $search) {
+    query ($page: Int, $perPage: Int, $search: String) {
+    Page (page: $page, perPage: $perPage) {
+        pageInfo {
+            total
+            currentPage
+            lastPage
+            hasNextPage
+            perPage
+        }
+      characters(search: $search) {
+        id
+        name {
+          full
+          native
+            }
+        }
+    }
+}
+    '''
+
+    variables = {
+        'search': name,
+        "page": 1,
+        "perPage": 8
+    }
+
+    # headers = {
+    #    'Authorization': f'Bearer {api_key}'
+    # }
+
+    # Envía la solicitud a la API de AniList
+    try:
+        response = requests.post(
+            url, json={'query': query, 'variables': variables})
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as error:
+        print(f"Error al realizar la solicitud: {error}")
+    except requests.exceptions.RequestException as error:
+        print(f"Error de red: {error}")
+
+    return response.json()
+
+
+def searchCharacterId(id):
+    query = '''
+    query ($id: Int) {
+      Character(id: $id) {
         name {
           full
           native
@@ -132,21 +277,22 @@ def searchCharacter(name):
     '''
 
     variables = {
-        'search': name
+        'id': id
     }
 
-    #headers = {
+    # headers = {
     #    'Authorization': f'Bearer {api_key}'
-    #}
+    # }
 
     # Envía la solicitud a la API de AniList
     try:
-        response = requests.post(url, json={'query': query, 'variables': variables})
+        response = requests.post(
+            url, json={'query': query, 'variables': variables})
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as error:
         print(f"Error al realizar la solicitud: {error}")
     except requests.exceptions.RequestException as error:
         print(f"Error de red: {error}")
-    
+
     return response.json()
