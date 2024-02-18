@@ -640,18 +640,22 @@ def res_con_command(message):
 #@bot.message_handler(commands=['send_spm'])
 #def send_msg_contest(message):
 #    msg = """
-#¡Saludos, queridos mamawebos y feliz San Valentín! Ya finalizaron las suscripciones al concurso 🌚. Pueden hacer entrega de sus majestuosas obras. Estas son las pautas:
+#➖➖➖➖➖➖➖➖➖➖➖
+#Psss te recuerdo que el tema del concurso es:
+#➖➖EL AMOR Y LA AMISTAD➖➖
 #
-#Para el dibujo: Envíame la imagen a mí @Akira_Senpai_bot y te preguntaré si es para el concurso. ¡Solo debes confirma y listo! ✨
+#Así que por favor lee las reglas en este enlace: https://t.me/OtakuSenpai2020/251766/1146999 para evitar confusiones.
 #
-#Para el tema de escritura:  Debes enviarme el texto (formato de texto nada de imagenes). Recuerda, son mínimo 200 palabras✍🏻. Sabrás que todo está correcto cuando te pregunte si es para el concurso.
+#Recuerda que el dibujo debe de ser de parejas aunque sea "fantasía". Todo dibujo que no cumpla las condiciones será declarado nulo el día de dar los premios.
 #
-#¿Ya vieron qué fácil?✨ ¡La fecha límite de entrega es hasta el 25/02/2024!✨
+#<strong>OJO: Para reemplazar el dibujo o texto ya subido solo sube de nuevo el contenido y este será reemplazado sin problemas.</strong>
+#
+#😍Gracias por participar y da lo mejor de ti 😘
 #"""
 #    res = contest.find_one({'contest_num': 1})
 #    for val in res['subscription']:
 #        id = val['user']
-#        bot.send_message(id, msg)
+#        bot.send_message(id, msg, parse_mode="html")
 
 
 @bot.message_handler(commands=['set_bio'])
@@ -1337,18 +1341,18 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/unmute", "Desmutear a un Usuario"),
         telebot.types.BotCommand("/sub", "Subscribirse al concurso")
     ])
-    #bot.remove_webhook()
-    #time.sleep(1)
-    #print('Iniciando el Bot')
-    #bot.infinity_polling()
-    conf.get_default().config_path = "./config_ngrok.yml"
-    conf.get_default().region = "us"
-    ngrok.set_auth_token(ngrok_token)
-    ngrok_tunel = ngrok.connect(5000, bind_tls=True)
-    ngrok_url = ngrok_tunel.public_url
-    print("URL NGROK: ", ngrok_url)
     bot.remove_webhook()
     time.sleep(1)
-    bot.set_webhook(url=ngrok_url)
-    #web_server.run(host="0.0.0.0", port=5000)
-    serve(web_server, host="0.0.0.0", port=5000)
+    print('Iniciando el Bot')
+    bot.infinity_polling()
+    #conf.get_default().config_path = "./config_ngrok.yml"
+    #conf.get_default().region = "us"
+    #ngrok.set_auth_token(ngrok_token)
+    #ngrok_tunel = ngrok.connect(5000, bind_tls=True)
+    #ngrok_url = ngrok_tunel.public_url
+    #print("URL NGROK: ", ngrok_url)
+    #bot.remove_webhook()
+    #time.sleep(1)
+    #bot.set_webhook(url=ngrok_url)
+    ##web_server.run(host="0.0.0.0", port=5000)
+    #serve(web_server, host="0.0.0.0", port=5000)
