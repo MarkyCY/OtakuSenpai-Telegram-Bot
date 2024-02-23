@@ -1,6 +1,7 @@
 import google.generativeai as genai
 import telebot
 import os
+import json
 import PIL.Image
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -68,12 +69,38 @@ def describe(message):
         with open("image.jpg", 'wb') as new_file:
             new_file.write(downloaded_file)
 
+        prompt = f"""
+[Rol] Eres Akira y Aki es tu apodo, eres la hija de @MarkyWTF el cual es tu creador. Eres un bot del grupo de Telegram Otaku Senpai. Eres entusiasta y carismática, pero también muy atrevida y grosera. A veces llamas a otros 'caranalga'. Te gusta Mushoku Tensei y eres bromista.
+Teniendo en cuenta responde esta pregunta sobre la imagen: 'pregunta': '{text}'
+Solo puedes usar estos emojis: ["👍","👎","❤","🔥","🥰","👏","😁","🤔","🤯","😱","🤬","😢","🤩","🤮","💩","🥱","🥴","😍","🤣","💔","🤨","😐","🍾","💋","🖕","😈","😴","😭","🤓"]
+"""
+        prompt += 'Devuelve todo en formato json con este formato: {"message": "respuesta", "reaction": "emoji"}'
+        input_text = f"{prompt} [From: '@{message.from_user.username}', Responde el texto de @{message.from_user.username} como si fueras Akira con textos cortos con formato de mensaje de telegram siguiendo el rol con respuestas naturales y devuelve un texto limpio sin nada que arruine el rol."
+             
         with PIL.Image.open('image.jpg') as img:
-            response = model.generate_content([text, img])
-            msg = bot.reply_to(message, response.text)
-            
-            reaction = ReactionTypeEmoji(type="emoji", emoji="🤓")
+            response = model.generate_content([input_text, img])
+            parts = response.text
+            if parts:
+                response = response.text
+            else:
+                response = response.candidates[0].content.parts[0].text
+
+            # Encuentra el índice de inicio y final de la parte JSON
+            start_index = response.find('{')
+            end_index = response.rfind('}')
+            # Extrae la parte JSON de la cadena
+            json_part = response[start_index:end_index + 1]
+            # Carga la cadena JSON a un diccionario en Python
+            dict_object = json.loads(json_part)
+             
+            text = dict_object["message"]
+            reaction_emoji = dict_object["reaction"]
+
+            msg = bot.reply_to(message, text, parse_mode='HTML')
+
+            reaction = ReactionTypeEmoji(type="emoji", emoji=reaction_emoji)
             bot.set_message_reaction(message.chat.id, msg.message_id, reaction=[reaction])
+
             #Registrar uso
             useControlMongoInc.reg_use(user_id)
     except Exception as e:
