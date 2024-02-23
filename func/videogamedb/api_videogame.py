@@ -71,7 +71,7 @@ def get_game(bot, chat_id, message_id, id):
         developers.append(developer)
 
     tags = []
-    for data in res_json['tags'][:min(len(res_json['tags']), 7)]:
+    for data in res_json['tags'][:min(len(res_json['tags']), 8)]:
         tag = f"<code>{data['name']}</code>"
         tags.append(tag)
 
@@ -88,7 +88,7 @@ def get_game(bot, chat_id, message_id, id):
 <strong>Etiquetas:</strong> {', '.join(tags)}
 """
     if res_json['background_image'] is not None:
-        link_preview_options = LinkPreviewOptions(url=res_json['background_image'], prefer_small_media=True)
+        link_preview_options = LinkPreviewOptions(url=res_json['background_image'], prefer_large_media=True, show_above_text=True)
     else:
         link_preview_options = LinkPreviewOptions(is_disabled=True)
 
