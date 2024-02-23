@@ -31,6 +31,12 @@ def describe(message):
     if chat_id != -1001485529816 and message.chat.id != -1001664356911 and message.from_user.id != 873919300:
         bot.reply_to(message, "Este comando es exclusivo de Otaku Senpai.")
         return
+    
+    if len(message.text.split(' ')) <= 1:
+        text = "Describe la imagen y su procedencia si es posible, y da tu opinión sobre ella, todo en español."
+    else:
+        text_all = message.text.split(" ")
+        text = " ".join(text_all[1:])
 
     #if chat_member.status not in ['administrator', 'creator'] and not any(admin['user_id'] == user_id for admin in Admins.find()):
     #    bot.reply_to(message, "Solo los administradores pueden usar este comando.")
@@ -60,7 +66,7 @@ def describe(message):
             new_file.write(downloaded_file)
 
         with PIL.Image.open('image.jpg') as img:
-            response = model.generate_content(["Describe la imagen y su procedencia si es posible, y da tu opinión sobre ella, todo en español.", img])
+            response = model.generate_content([text, img])
             msg = bot.reply_to(message, response.text)
             
             reaction = ReactionTypeEmoji(type="emoji", emoji="🤓")
