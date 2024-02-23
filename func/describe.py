@@ -55,7 +55,10 @@ def describe(message):
         return
     
     reaction = ReactionTypeEmoji(type="emoji", emoji="🤔")
-    bot.set_message_reaction(message.chat.id, message.reply_to_message.message_id, reaction=[reaction])
+    try:
+        bot.set_message_reaction(message.chat.id, message.reply_to_message.message_id, reaction=[reaction])
+    except Exception as e:
+        print(e)
 
     try:
         fileID = message.reply_to_message.photo[-1].file_id
