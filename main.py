@@ -640,22 +640,17 @@ def res_con_command(message):
 #@bot.message_handler(commands=['send_spm'])
 #def send_msg_contest(message):
 #    msg = """
-#➖➖➖➖➖➖➖➖➖➖➖
-#Psss te recuerdo que el tema del concurso es:
-#➖➖EL AMOR Y LA AMISTAD➖➖
-#
-#Así que por favor lee las reglas en este enlace: https://t.me/OtakuSenpai2020/251766/1146999 para evitar confusiones.
-#
-#Recuerda que el dibujo debe de ser de parejas aunque sea "fantasía". Todo dibujo que no cumpla las condiciones será declarado nulo el día de dar los premios.
-#
-#<strong>OJO: Para reemplazar el dibujo o texto ya subido solo sube de nuevo el contenido y este será reemplazado sin problemas.</strong>
-#
-#😍Gracias por participar y da lo mejor de ti 😘
+#Ey, quedan dos días para entregar el concurso y aún no has entregado...
+#Que esperas eh? Recuerda que hay 250 cup de premio mamawebo!
 #"""
 #    res = contest.find_one({'contest_num': 1})
 #    for val in res['subscription']:
 #        id = val['user']
-#        bot.send_message(id, msg, parse_mode="html")
+#        print(id)
+#        try:
+#            bot.send_message(id, msg, parse_mode="html")
+#        except ApiTelegramException as e:
+#            print(e)
 
 
 @bot.message_handler(commands=['set_bio'])
