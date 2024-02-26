@@ -205,7 +205,11 @@ def respuesta_botones_inline(call):
             else:
                 bot.answer_callback_query(call.id, f"Has Votado: {partes[2]}")
 
-            msg = call.message.caption
+            if type == 'photo':
+                msg = call.message.caption
+            if type == 'text':
+                msg = call.message.text
+
             name = call.from_user.first_name
 
             if re.search(r'(' + re.escape(name) + r'\d+️⃣|' + re.escape(name) + r'🔟)', msg):
@@ -220,8 +224,11 @@ def respuesta_botones_inline(call):
                 btn = InlineKeyboardButton(str(i), callback_data=f"contest_vote_{i}_{partes[3]}_{partes[4]}")
                 btns.append(btn)
             markup.add(*btns)
-
-            bot.edit_message_caption(msg, cid, mid, reply_markup=markup)
+            
+            if type == 'photo':
+                bot.edit_message_caption(msg, cid, mid, reply_markup=markup)
+            if type == 'text':
+                bot.edit_message_text(msg, cid, mid, reply_markup=markup)
 
             Contest_Data.update_one(
                {'u_id': int(partes[3]), 'type': type},
@@ -628,13 +635,37 @@ def res_con_command(message):
         text += f"\n<a href='tg://user?id={val['user']}'>{chat_member.user.first_name}</a>" 
 
     bot.reply_to(message, text, parse_mode="html")
-    #result = Contest_Data.find()
-    #for doc in result:
-    #    votos = doc["vote"]
-    #    suma = sum(votos.values())
-    #    num = len(votos)
-    #    prom = (suma / num)
-    #    bot.send_message(message.chat.id, f"El promedio de votos para el participante {doc['u_id']}:\n es {prom:.1f} de 10")
+
+@bot.message_handler(commands=['vsubs'])
+def res_con_command(message):
+    print(os.getenv('MONGO_URI'))
+    result = Contest_Data.find()
+    for doc in result:
+
+        chat_member = bot.get_chat_member(-1001485529816, doc['u_id'])
+
+        if(doc.get('vote')):
+            votos = doc["vote"]
+            suma = sum(votos.values())
+            num = len(votos)
+            prom = (suma / num)
+            print(prom)
+        else:
+            print("vacio")
+        
+        content = Contest_Data.find_one({'u_id': doc['u_id']})
+        if content["type"] == 'text':
+            print(f"{chat_member.user.first_name}\n texto: {content['text'][:20]}...\n")
+        elif content["type"] == 'photo':
+            print(f"{chat_member.user.first_name}\n")
+        else:
+            print("nada")
+
+
+
+
+        #with PIL.Image.open(f'func/concurso/{message.from_user.id}.jpg') as img:
+        #bot.send_message(message.chat.id, f"El promedio de votos para el participante @{chat_member.username}:\n es {prom:.1f} de 10")
 
 
 #@bot.message_handler(commands=['send_spm'])
