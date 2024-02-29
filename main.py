@@ -56,7 +56,7 @@ from func.anilist.search_character import show_character, search_characters
 #Concurso
 from func.concurso.sub_user import subscribe_user, unsubscribe_user, send_data_contest
 #Evento
-from func.event import calvicia
+from func.event import calvicia, contest_event
 import json
 load_dotenv()
 
@@ -625,48 +625,22 @@ def endPollAdd(message, data):
         msg = bot.send_message(message.from_user.id, f"Formato inválido, inténtalo de nuevo:")
         bot.register_next_step_handler(msg, endPollAdd, data)
 
-
+    
 @bot.message_handler(commands=['subs'])
 def res_con_command(message):
     res = contest.find_one({'contest_num': 1})
-    text = "Suscriptores\n"
+    text = "Suscriptores:\n"
     for val in res['subscription']:
         chat_member = bot.get_chat_member(-1001485529816, val['user'])
-        text += f"\n<a href='tg://user?id={val['user']}'>{chat_member.user.first_name}</a>" 
-
+        if chat_member.user.username is not None:
+            text += f"\n<a href='https://t.me/{chat_member.user.username}'>{chat_member.user.username}</a>" 
+        else:
+            text += f"\n<a href='tg://user?id={chat_member.user.id}'>{chat_member.user.first_name}</a>" 
     bot.reply_to(message, text, parse_mode="html")
 
 @bot.message_handler(commands=['vsubs'])
 def res_con_command(message):
-    print(os.getenv('MONGO_URI'))
-    result = Contest_Data.find()
-    for doc in result:
-
-        chat_member = bot.get_chat_member(-1001485529816, doc['u_id'])
-
-        if(doc.get('vote')):
-            votos = doc["vote"]
-            suma = sum(votos.values())
-            num = len(votos)
-            prom = (suma / num)
-            print(prom)
-        else:
-            print("vacio")
-        
-        content = Contest_Data.find_one({'u_id': doc['u_id']})
-        if content["type"] == 'text':
-            print(f"{chat_member.user.first_name}\n texto: {content['text'][:20]}...\n")
-        elif content["type"] == 'photo':
-            print(f"{chat_member.user.first_name}\n")
-        else:
-            print("nada")
-
-
-
-
-        #with PIL.Image.open(f'func/concurso/{message.from_user.id}.jpg') as img:
-        #bot.send_message(message.chat.id, f"El promedio de votos para el participante @{chat_member.username}:\n es {prom:.1f} de 10")
-
+    contest_event(message)
 
 #@bot.message_handler(commands=['send_spm'])
 #def send_msg_contest(message):
@@ -1367,18 +1341,18 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/unmute", "Desmutear a un Usuario"),
         telebot.types.BotCommand("/sub", "Subscribirse al concurso")
     ])
-    #bot.remove_webhook()
-    #time.sleep(1)
-    #print('Iniciando el Bot')
-    #bot.infinity_polling()
-    conf.get_default().config_path = "./config_ngrok.yml"
-    conf.get_default().region = "us"
-    ngrok.set_auth_token(ngrok_token)
-    ngrok_tunel = ngrok.connect(5000, bind_tls=True)
-    ngrok_url = ngrok_tunel.public_url
-    print("URL NGROK: ", ngrok_url)
     bot.remove_webhook()
     time.sleep(1)
-    bot.set_webhook(url=ngrok_url)
-    #web_server.run(host="0.0.0.0", port=5000)
-    serve(web_server, host="0.0.0.0", port=5000)
+    print('Iniciando el Bot')
+    bot.infinity_polling()
+    #conf.get_default().config_path = "./config_ngrok.yml"
+    #conf.get_default().region = "us"
+    #ngrok.set_auth_token(ngrok_token)
+    #ngrok_tunel = ngrok.connect(5000, bind_tls=True)
+    #ngrok_url = ngrok_tunel.public_url
+    #print("URL NGROK: ", ngrok_url)
+    #bot.remove_webhook()
+    #time.sleep(1)
+    #bot.set_webhook(url=ngrok_url)
+    ##web_server.run(host="0.0.0.0", port=5000)
+    #serve(web_server, host="0.0.0.0", port=5000)
