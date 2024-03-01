@@ -62,6 +62,13 @@ def subscribe_user(message):
     username = message.from_user.username
     found = False
 
+    chat_member = bot.get_chat_member(-1001485529816, user_id)
+    print(chat_member)
+
+    if chat_member is None:
+        bot.send_message(chat_id, f"Solo los participantes de <a href='https://t.me/OtakuSenpai2020'>Otaku Senpai</a> pueden participar en el concurso.", parse_mode="html")
+        return
+
     if username is None:
         bot.send_message(chat_id, f"Lo siento, no te puedes subscribir al concurso sin un nombre de usuario")
         return
