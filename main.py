@@ -630,13 +630,15 @@ def endPollAdd(message, data):
 def res_con_command(message):
     res = contest.find_one({'contest_num': 1})
     text = "Suscriptores:\n"
-    for val in res['subscription']:
+    for i, val in enumerate(res['subscription']):
+        i = i + 1
+
         chat_member = bot.get_chat_member(-1001485529816, val['user'])
         if chat_member.user.username is not None:
-            text += f"\n<a href='https://t.me/{chat_member.user.username}'>{chat_member.user.username}</a>" 
+            text += f"\n{i}- <a href='https://t.me/{chat_member.user.username}'>{chat_member.user.username}</a>" 
         else:
-            text += f"\n<a href='tg://user?id={chat_member.user.id}'>{chat_member.user.first_name}</a>" 
-    bot.reply_to(message, text, parse_mode="html")
+            text += f"\n{i}- <a href='tg://user?id={chat_member.user.id}'>{chat_member.user.first_name}</a>" 
+    bot.reply_to(message, text, parse_mode="html", disable_web_page_preview=True)
 
 @bot.message_handler(commands=['vsubs'])
 def res_con_command(message):
