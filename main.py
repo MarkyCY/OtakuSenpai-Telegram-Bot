@@ -493,8 +493,13 @@ def character(message):
 
 @bot.message_handler(commands=['sub'])
 def command_to_subscribe(message):
-    #bot.reply_to(message, "Suscripciones Cerradas.")
-    #return
+    now = datetime.datetime.now()
+    objetive = datetime(now.year, 3, 1, 14, 00)
+    
+    if now >= objetive:
+        bot.reply_to(message, "Suscripciones Cerradas.")
+        return
+    
     if message.chat.type == 'private':
         subscribe_user(message)
 
