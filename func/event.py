@@ -71,13 +71,12 @@ def contest_event(message):
         bot.send_message(to_chat_id, "Psss wapo ve para el tópico de <a href='https://t.me/OtakuSenpai2020/251988'>Concursos</a> que vamos a empezar en unos minutos", parse_mode="html", message_thread_id=forum)
         time.sleep(3)
 
-    #time.sleep(120)
-    time.sleep(6)
+    time.sleep(120)
 
     #Anuncio fin
 
     bot.send_message(to_chat_id, "Bieeeen atención vamos a mostrar los resultados del concurso wiiiii.", message_thread_id=to_forum)
-    time.sleep(20)
+    time.sleep(30)
     bot.send_message(to_chat_id, "Vale empecémos! Primeramente con las narraciones!", message_thread_id=to_forum)
     time.sleep(10)
 
@@ -145,17 +144,21 @@ def contest_event(message):
 
     text_res.sort(key=lambda x: x[1], reverse=True)
 
-    anunc = "Este es el promedio por votaciones del concurso de narración:"
+    anunc = "Este es el promedio por votaciones de cada concursante en el concurso de narración:"
     for i, tupla in enumerate(text_res):
         if i == 0:
             winner = tupla[0]
         anunc += f"\n@{tupla[0]} con <span class='tg-spoiler'>{tupla[1]}/10</span>"
         print(winner)
 
-    bot.send_message(to_chat_id, anunc, parse_mode="html", message_thread_id=to_forum)
+    bot.send_message(to_chat_id, f"Estas son todas las obras del concurso de narración.", parse_mode="html", message_thread_id=to_forum)
     time.sleep(5)
-    bot.send_message(to_chat_id, f"La persona ganadora es @{winner} Felicidades!!!", parse_mode="html", message_thread_id=to_forum)
+    bot.send_message(to_chat_id, f"La persona ganadora es...", parse_mode="html", message_thread_id=to_forum)
+    time.sleep(20)
+    bot.send_message(to_chat_id, f"@{winner} Felicidades!!!", parse_mode="html", message_thread_id=to_forum)
     bot.send_sticker(to_chat_id, sticker="CAACAgEAAx0CYzQSLwAC47Nl4SXUEEshkmME3YzHEpANGnZ-3QACTQUAAnhGKUaVOtfYYMI7YjQE", message_thread_id=to_forum)
+    time.sleep(10)
+    bot.send_message(to_chat_id, anunc, parse_mode="html", message_thread_id=to_forum)
     
     time.sleep(20)
 
@@ -216,12 +219,11 @@ def contest_event(message):
             bot.send_photo(to_chat_id, img, message_thread_id=to_forum)
 
         bot.send_sticker(to_chat_id, sticker="CAACAgEAAx0CYzQSLwAC47Jl4SXInzn1xmMHuL6L_vmFtywzYwACMgUAAlRHKEZ58qEMwbw7TDQE", message_thread_id=to_forum)
-        time.sleep(5)
-
+        time.sleep(10)
     
     img_res.sort(key=lambda x: x[1], reverse=True)
 
-    anunc = "Y ahora el promedio por votaciones del concurso de dibujo:"
+    anunc = "Este es el promedio por votaciones de cada concursante en el concurso de dibujo:"
     for i, tupla in enumerate(img_res):
         if i == 0:
             winner = tupla[0]
@@ -230,16 +232,19 @@ def contest_event(message):
         
     #Finalizar con Anuncio de ganador
 
-    bot.send_message(to_chat_id, anunc, parse_mode="html", message_thread_id=to_forum)
+    bot.send_message(to_chat_id, f"Estas son todas las obras del concurso de dibujo.", parse_mode="html", message_thread_id=to_forum)
     time.sleep(10)
-    bot.send_message(to_chat_id, f"La persona ganadora es @{winner} Felicidades!!!", parse_mode="html", message_thread_id=to_forum)
+    bot.send_message(to_chat_id, f"Y la persona ganadora es...", parse_mode="html", message_thread_id=to_forum)
+    time.sleep(20)
+    bot.send_message(to_chat_id, f"@{winner} Felicidades!!!", parse_mode="html", message_thread_id=to_forum)
     bot.send_sticker(to_chat_id, sticker="CAACAgEAAx0CYzQSLwAC47Nl4SXUEEshkmME3YzHEpANGnZ-3QACTQUAAnhGKUaVOtfYYMI7YjQE", message_thread_id=to_forum)
     time.sleep(10)
+    bot.send_message(to_chat_id, anunc, parse_mode="html", message_thread_id=to_forum)
+    time.sleep(20)
     bot.send_message(to_chat_id, f"Muchas gracias a todos por estar aquí y gracias a los concursantes por participar y por sus geniales obras. Ya volveremos con otro super evento próximamente.", parse_mode="html", message_thread_id=to_forum)
     #Abrir Temas
     bot.reopen_general_forum_topic(to_chat_id)
     bot.send_message(to_chat_id, "Evento terminado mua los quiero mamawebos", parse_mode="html")
     for forum in forums:
-        time.sleep(3)
         bot.reopen_forum_topic(to_chat_id, forum)
         bot.send_message(to_chat_id, "Evento terminado mua los quiero mamawebos", parse_mode="html", message_thread_id=forum)
