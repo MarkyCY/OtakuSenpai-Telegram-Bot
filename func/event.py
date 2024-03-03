@@ -56,27 +56,26 @@ def contest_event(message):
     forums = [252001, 594583, 251985, 342257, 253659, 252051, 251977, 253687, 251988, 251980, 251973]
     #forums = [58139]
     
-    try:
-        bot.close_general_forum_topic(to_chat_id)
-    except Exception as e:
-        print(e)
-    bot.send_message(to_chat_id, "Psss wapo ve para el tópico de <a href='https://t.me/OtakuSenpai2020/251988'>Concursos</a> que vamos a empezar en unos minutos", parse_mode="html")
+    #try:
+    #    bot.close_general_forum_topic(to_chat_id)
+    #except Exception as e:
+    #    print(e)
+    #bot.send_message(to_chat_id, "Psss wapo ve para el tópico de <a href='https://t.me/OtakuSenpai2020/251988'>Concursos</a> que vamos a empezar en unos minutos", parse_mode="html")
+#
+    #for forum in forums:
+    #    try:
+    #        bot.close_forum_topic(to_chat_id, forum)
+    #    except Exception as e:
+    #        print(e)
+#
+    #    bot.send_message(to_chat_id, "Psss wapo ve para el tópico de <a href='https://t.me/OtakuSenpai2020/251988'>Concursos</a> que vamos a empezar en unos minutos", parse_mode="html", message_thread_id=forum)
+    #    time.sleep(3)
 
-    for forum in forums:
-        try:
-            bot.close_forum_topic(to_chat_id, forum)
-        except Exception as e:
-            print(e)
-
-        bot.send_message(to_chat_id, "Psss wapo ve para el tópico de <a href='https://t.me/OtakuSenpai2020/251988'>Concursos</a> que vamos a empezar en unos minutos", parse_mode="html", message_thread_id=forum)
-        time.sleep(3)
-
-    time.sleep(120)
 
     #Anuncio fin
 
     bot.send_message(to_chat_id, "Bieeeen atención vamos a mostrar los resultados del concurso wiiiii.", message_thread_id=to_forum)
-    time.sleep(30)
+    time.sleep(20)
     bot.send_message(to_chat_id, "Vale empecémos! Primeramente con las narraciones!", message_thread_id=to_forum)
     time.sleep(10)
 
