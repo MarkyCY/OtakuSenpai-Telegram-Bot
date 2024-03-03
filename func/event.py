@@ -54,7 +54,7 @@ def contest_event(message):
     res_img = Contest_Data.find({"type": "photo"})
     #Anuncio y cierre de temas
     forums = [252001, 594583, 251985, 342257, 253659, 252051, 251977, 253687, 251988, 251980, 251973]
-    #forums = [58139]
+    forums = [58139]
     
     #try:
     #    bot.close_general_forum_topic(to_chat_id)
