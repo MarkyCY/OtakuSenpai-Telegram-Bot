@@ -1010,7 +1010,8 @@ def command_unmute_user(message):
         bot.reply_to(message, f"No se pudo ejecutar esta acción.")
 
 
-scheduler.add_job(calvicia, CronTrigger(hour=hour, minute=minute, second=seconds, timezone=tz), args=(-1001664356911, num))
+#scheduler.add_job(calvicia, CronTrigger(hour=hour, minute=minute, second=seconds, timezone=tz), args=(-1001664356911, num))
+
 import PIL.Image     
 
 btn_contest = ReplyKeyboardMarkup(
