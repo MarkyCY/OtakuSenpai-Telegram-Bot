@@ -1011,13 +1011,13 @@ def command_unmute_user(message):
 
 
 #scheduler.add_job(calvicia, CronTrigger(hour=hour, minute=minute, second=seconds, timezone=tz), args=(-1001664356911, num))
-import PIL.Image     
-
-btn_contest = ReplyKeyboardMarkup(
-        resize_keyboard=True)
-btn_contest.row('Si')
-btn_contest.row('No')
-
+#import PIL.Image     
+#
+#btn_contest = ReplyKeyboardMarkup(
+#        resize_keyboard=True)
+#btn_contest.row('Si')
+#btn_contest.row('No')
+#
 #@bot.message_handler(content_types=['photo'])
 #def contest_photo(message):
 #    contest_num = 1
