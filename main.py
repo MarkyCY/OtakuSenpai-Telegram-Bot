@@ -49,6 +49,9 @@ from func.admin.ban import ban_user
 from func.admin.unban import unban_user
 from func.admin.unmute import unmute_user
 from func.admin.mute import mute_user
+#Triggers and Black Word
+from func.triggers import *
+from func.black_word import *
 #Api Anilist Use
 from func.anilist.search_manga import show_manga, search_mangas
 from func.anilist.search_anime import show_anime, search_animes
@@ -1212,51 +1215,11 @@ def handle_message(message):
             bot.leave_chat(message.chat.id)
             return
     
-    #Triggers
     if message.chat.type in ['group', 'supergroup']:
-        blackwords = []
-        for doc in Blacklist.find():
-            blackwords.append(doc["blackword"].lower())
+        black_word(bot, Blacklist, message)
 
-        pattern_black = re.compile("|".join(blackwords))
-
-        match_black = pattern_black.search(message.text.lower())
-
-        if match_black:
-            warn_user(message, "YES")
-            bot.reply_to(message, detected_blackword(message.from_user.username))
-            bot.delete_message(message.chat.id, message.message_id)
-            return
-
-        triggers = {}
-        triggers_equal = {}
-        for doc in Triggers.find():
-            if "eq" in doc:
-                if doc["eq"] is False:
-                    triggers_equal[doc["triggers"].lower()] = doc["list_text"]
-                if doc["eq"] is True:
-                    triggers[doc["triggers"].lower()] = doc["list_text"]
-
-        match = False
-        trigger_text = triggers_equal.get(message.text.lower(), None)
-        if len(triggers) != 0:
-            pattern_trigger = re.compile("|".join(triggers))
-            pattern_match = pattern_trigger.search(message.text.lower())
-        else:
-            pattern_match = None
-
-        if pattern_match:
-            trigger = pattern_match.group()
-            response = random.choice(triggers[trigger])
-            bot.reply_to(message, response)
-
-        if trigger_text:
-            match = True
-        if match:
-            response = random.choice(trigger_text)
-            bot.reply_to(message, response)
+        trigger_word(bot, Triggers, message)
         
-        #Akira AI
         akira_ai(message)
 
         #AKF
