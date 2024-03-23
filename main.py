@@ -27,7 +27,7 @@ from func.blacklist.blacklist import *
 from func.bot_welcome import send_welcome
 from func.info import info
 from func.sticker import sticker_info, steal_sticker, sticker_del
-from func.list_admins import list_admins, isAdmin
+from func.list_admins import list_admins, isAdmin, set_mod, del_mod
 from func.report import report
 from func.describe import describe
 from func.traduction import translate_command
@@ -49,7 +49,7 @@ from func.admin.unban import unban_user
 from func.admin.unmute import unmute_user
 from func.admin.mute import mute_user
 #Triggers and Black Word
-from func.triggers import command_triggers
+from func.triggers import command_triggers, trigger_word
 from func.black_word import *
 #Api Anilist Use
 from func.anilist.search_manga import search_mangas
@@ -182,7 +182,7 @@ def command_to_unsubscribe(message):
 
 @bot.message_handler(commands=['list_admins'])
 def command_list_admins(message):
-    list_admins(message)
+    list_admins(message, bot)
     
 
 @bot.message_handler(commands=['report'])
@@ -322,6 +322,15 @@ def afk_command(message):
 def brb_command(message):
     set_afk(message)
 
+#Agregar Moderador
+@bot.message_handler(commands=['set_mod'])
+def set_mod_command(message):
+    set_mod(message, bot)
+
+#Eliminar Moderador
+@bot.message_handler(commands=['del_mod'])
+def del_mod_command(message):
+    del_mod(message, bot)
 
 @bot.message_handler(commands=['add_anime'])
 def add_anime_command(message):
@@ -330,6 +339,8 @@ def add_anime_command(message):
 @bot.message_handler(commands=['del_anime'])
 def del_anime_command(message):
     del_anime(message)
+
+
 
 @bot.message_handler(commands=['tr'])
 def tr_command(message):
@@ -513,7 +524,7 @@ def handle_message(message):
     if message.chat.type in ['group', 'supergroup']:
         black_word(bot, Blacklist, message)
 
-        #trigger_word(bot, Triggers, message)
+        trigger_word(bot, Triggers, message)
         
         akira_ai(message)
 
