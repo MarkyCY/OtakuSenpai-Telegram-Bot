@@ -1,20 +1,13 @@
-import telebot
-import os
 from database.mongodb import get_db
 
-from dotenv import load_dotenv
-load_dotenv()
 
 # Conectar a la base de datos
 db = get_db()
 chat_admins = db.admins
+users = db.users
 
 
-#Importamos los datos necesarios para el bot
-Token = os.getenv('BOT_API')
-bot = telebot.TeleBot(Token)
-
-def list_admins(message):
+def list_admins(message, bot):
     if (message.chat.type == 'supergroup' or message.chat.type == 'group'):
         # obtén la información del chat
         chat_id = message.chat.id
@@ -57,3 +50,73 @@ def isAdmin(user_id):
         if admin['user_id'] == user_id:
             isAdmin = "Yes"
     return isAdmin
+
+
+def isModerator(user_id):
+    isModerator = False
+    Users = users.find({"is_mod": True})
+    for user in Users:
+        if user['user_id'] == user_id:
+            isModerator = True
+    return isModerator
+
+
+def set_mod(message, bot):
+    if not message.reply_to_message:
+        bot.reply_to(message, "Debes hacer reply a un usuario")
+        return
+    
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    username = message.from_user.username
+
+    chat_member = bot.get_chat_member(chat_id, user_id)
+    if chat_member.status not in ['administrator', 'creator']:
+        bot.reply_to(message, "Solo los administradores pueden usar este comando.")
+        return
+
+    if chat_id != -1001485529816:
+        bot.reply_to(message, "Este comando solo puede ser usado en el grupo de OtakuSenpai.")
+        return
+    
+    reply_user_id = message.reply_to_message.from_user.id
+
+    filter = {"user_id": reply_user_id}
+
+    try:
+        users.update_one(filter, {"$set": {"is_mod": True}}, upsert=True)
+    except Exception as e:
+        bot.reply_to(message, "Error en la acción.")
+        print(f"Error: {e}")
+        return
+
+    bot.reply_to(message, "Usuario agregado como colaborador.")
+    
+def del_mod(message, bot):
+    if not message.reply_to_message:
+        bot.reply_to(message, "Debes hacer reply a un usuario")
+        return
+    
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+
+    chat_member = bot.get_chat_member(chat_id, user_id)
+    if chat_member.status not in ['administrator', 'creator']:
+        bot.reply_to(message, "Solo los administradores pueden usar este comando.")
+        return
+    if chat_id != -1001485529816:
+        bot.reply_to(message, "Este comando solo puede ser usado en el grupo de OtakuSenpai.")
+        return
+    
+    reply_user_id = message.reply_to_message.from_user.id
+
+    filter = {"user_id": reply_user_id}
+
+    try:
+        users.update_one(filter, {"$set": {"is_mod": False}}, upsert=True)
+    except Exception as e:
+        bot.reply_to(message, "Error en la acción.")
+        print(f"Error: {e}")
+        return
+    
+    bot.reply_to(message, f"Usuario eliminado de colaborador.")
