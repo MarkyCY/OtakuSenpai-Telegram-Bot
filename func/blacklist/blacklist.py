@@ -1,12 +1,12 @@
 from database.mongodb import get_db
 import telebot
 import os
+import time
 import pickle
 
 from telebot.types import InlineKeyboardMarkup
 from telebot.types import InlineKeyboardButton
 from func.list_admins import isAdmin
-from bson import ObjectId
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -77,3 +77,27 @@ def mostrar_pagina_bl(resul, cid, uid=None, pag=0, mid=None, message=None):
         mid = res.message_id
         datos = {"pag":0, "lista":resul, "user_id": uid}
         pickle.dump(datos, open(f'./data/{uid}_{mid}', 'wb'))
+
+def add_blackword(bot, cid, uid, msg_id):
+    msg = bot.send_message(uid, f"Escribe la nueva palabra:")
+    bot.register_next_step_handler(msg, catch_new_blackword, bot, uid, msg_id, cid)
+
+def catch_new_blackword(msg, bot, uid, msg_id, cid):
+    if msg.from_user.id == uid:
+        if msg.text is not None:
+            Blacklist.insert_one({ "blackword": msg.text })
+            resul = Blacklist.find()
+            blackword_list = []
+            for doc in resul:
+                blackword_list.append(doc)
+            page = 0
+            datos = {"pag":page, "lista":blackword_list, "user_id": uid}
+            os.remove(f'./data/{cid}_{msg_id}')
+            time.sleep(1)
+            pickle.dump(datos, open(f'./data/{cid}_{msg_id}', 'wb'))
+            mostrar_pagina_bl(blackword_list, cid, uid, page, msg_id)
+            msg = bot.send_message(msg.chat.id, f"Listo la palabra\n<code>{msg.text}</code>\nse añadió correctamente.", parse_mode="html")
+
+        else:
+            bot.send_message(msg.chat.id, f"Acción cancelada")
+            bot.clear_step_handler_by_chat_id(uid)
