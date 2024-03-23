@@ -4,6 +4,7 @@ import time
 
 from dotenv import load_dotenv
 from database.mongodb import get_db
+from func.list_admins import isModerator
 
 load_dotenv()
 
@@ -36,8 +37,9 @@ def add_anime(message):
 
     chat_id = message.chat.id
     user_id = message.from_user.id
+
     chat_member = bot.get_chat_member(chat_id, user_id)
-    if chat_member.status not in ['administrator', 'creator']:
+    if chat_member.status not in ['administrator', 'creator'] and isModerator(user_id) is False:
         bot.reply_to(message, "Solo los administradores pueden usar este comando.")
         return
 
@@ -86,8 +88,9 @@ def del_anime(message):
 
     chat_id = message.chat.id
     user_id = message.from_user.id
+    
     chat_member = bot.get_chat_member(chat_id, user_id)
-    if chat_member.status not in ['administrator', 'creator']:
+    if chat_member.status not in ['administrator', 'creator'] and isModerator(user_id) is False:
         bot.reply_to(message, "Solo los administradores pueden usar este comando.")
         return
 
