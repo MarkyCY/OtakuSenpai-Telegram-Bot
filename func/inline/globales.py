@@ -158,11 +158,10 @@ def respuesta_botones_inline(call, bot):
         #End contest
     
     chat_member = bot.get_chat_member(cid, uid)
-    isadmin = isAdmin(uid)
 
     ADMIN_IDS = {1221472021, 5579842331, 5174301596}
 
-    if chat_member.status not in ['administrator', 'creator'] and uid not in ADMIN_IDS and isadmin is None:
+    if chat_member.status not in ['administrator', 'creator'] and uid not in ADMIN_IDS and isAdmin(uid) is None:
         bot.answer_callback_query(call.id, "Solo los administradores pueden usar este comando.")
         return
     
