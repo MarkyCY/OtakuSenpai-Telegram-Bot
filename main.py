@@ -15,7 +15,7 @@ from telebot.apihelper import ApiTelegramException
 import threading
 import time
 
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReactionTypeEmoji, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telebot.types import ReactionTypeEmoji
 
 #Personal Trigger
 from func.inline.globales import respuesta_botones_inline
@@ -37,7 +37,7 @@ from func.afk import set_afk, get_afk
 from func.set_bio import set_description
 from func.useControl import useControlMongo
 #VideoGames
-from func.videogamedb.api_videogame import search_game, get_game
+from func.videogamedb.api_videogame import search_game
 #Anime and manga gestion
 from func.anime import *
 #Inline Query
