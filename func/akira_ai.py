@@ -44,6 +44,10 @@ def get_permissions_ai(message):
         bot.reply_to(message, "Solo los administradores pueden usar este comando.")
         return
 
+    if chat_id != -1001485529816 and message.from_user.id != 873919300:
+        bot.reply_to(message, "Este comando solo puede ser usado en el grupo de OtakuSenpai.")
+        return
+
     if not message.reply_to_message:
         bot.reply_to(message, "Debe hacer reply al sujeto.")
         return
