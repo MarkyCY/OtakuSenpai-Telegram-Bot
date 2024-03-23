@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from database.mongodb import get_db
 import telebot
 import os
 import pickle
@@ -13,9 +13,7 @@ load_dotenv()
 
 
 # Conectar a la base de datos
-mongo_uri = os.getenv('MONGO_URI')
-client = MongoClient(mongo_uri)
-db = client.otakusenpai
+db = get_db()
 Blacklist = db.blacklist
 
 # Importamos los datos necesarios para el bot

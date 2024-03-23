@@ -8,12 +8,10 @@ Token = os.getenv('BOT_API')
 
 bot = telebot.TeleBot(Token)
 
-from pymongo import MongoClient
+from database.mongodb import get_db
 
 # Conectar a la base de datos
-mongo_uri = os.getenv('MONGO_URI')
-client = MongoClient(mongo_uri)
-db = client.otakusenpai
+db = get_db()
 animes = db.animes
 
 #peliculas = {

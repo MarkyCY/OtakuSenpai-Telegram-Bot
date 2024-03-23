@@ -8,15 +8,13 @@ from telebot.apihelper import ApiTelegramException
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from pymongo import MongoClient
+from database.mongodb import get_db
 
 from dotenv import load_dotenv
 load_dotenv()
 
 # Conectar a la base de datos
-mongo_uri = os.getenv('MONGO_URI')
-client = MongoClient(mongo_uri)
-db = client.otakusenpai
+db = get_db()
 
 users = db.users
 Contest_Data = db.contest_data

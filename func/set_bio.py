@@ -2,14 +2,12 @@ import telebot
 import os
 
 from dotenv import load_dotenv
-from pymongo import MongoClient
+from database.mongodb import get_db
 
 load_dotenv()
 
 # Conectar a la base de datos
-mongo_uri = os.getenv('MONGO_URI')
-client = MongoClient(mongo_uri)
-db = client.otakusenpai
+db = get_db()
 users = db.users
 
 #Importamos los datos necesarios para el bot

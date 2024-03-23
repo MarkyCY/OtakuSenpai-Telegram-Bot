@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from database.mongodb import get_db
 from func.api_anilist import search_anime, search_anime_id
 from deep_translator import GoogleTranslator
 from telebot.types import ReactionTypeEmoji, InlineKeyboardMarkup, InlineKeyboardButton, LinkPreviewOptions
@@ -12,9 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Conectar a la base de datos
-mongo_uri = os.getenv('MONGO_URI')
-client = MongoClient(mongo_uri)
-db = client.otakusenpai
+db = get_db()
 users = db.users
 
 #Importamos los datos necesarios para el bot

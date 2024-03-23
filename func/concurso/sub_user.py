@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from database.mongodb import get_db
 from telebot.apihelper import ApiTelegramException
 import telebot
 import os
@@ -7,9 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Conectar a la base de datos
-mongo_uri = os.getenv('MONGO_URI')
-client = MongoClient(mongo_uri)
-db = client.otakusenpai
+db = get_db()
 users = db.users
 contest = db.contest
 Contest_Data = db.contest_data
