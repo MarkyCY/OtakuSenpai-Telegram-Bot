@@ -97,7 +97,7 @@ useControlMongoInc = useControlMongo()
 bot = telebot.TeleBot(Token)
 
 #Inline Query
-@bot.inline_handler(lambda query: len(query.query) > 0)
+@bot.inline_handler(lambda query: len(query.query) >= 0)
 def catch_query(inline_query):
     query_text(inline_query)
 
