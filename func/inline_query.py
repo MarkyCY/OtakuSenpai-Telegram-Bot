@@ -26,7 +26,7 @@ animes = db.animes
 def query_text(inline_query):
     args = inline_query.query.split(" ")
     
-    if len(args) == 1:
+    if len(args) <= 1:
 
         try:
             results = [
