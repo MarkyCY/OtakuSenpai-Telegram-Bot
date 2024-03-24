@@ -97,7 +97,7 @@ def query_text(inline_query):
                     id=anime['title'],  # El primer argumento ahora es 'id', no 'titulo'
                     thumbnail_url=img,
                     title=f"Anime: {anime['title']}",
-                    #description=text,
+                    description=f"Nombre de Anime: {anime['title']}",
                     url=anime['link'],
                     #caption=text,
                     #parse_mode="html"
