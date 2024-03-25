@@ -1,5 +1,5 @@
 ### Hola mis queridos otakus wapos
-Puedes contribuir con nosotros reportando problemas, errores y solicitudes de extracción (PRs). También puedes echar un vistazo a los problemas activos y solucionarlos.
+Puedes contribuir con Akira reportando problemas, errores y solicitudes de extracción (PRs). También puedes echar un vistazo a los problemas activos y solucionarlos.
 Si deseas discutir algo, siéntete libre de presentar tus opiniones, puntos de vista o cualquier otro comentario relevante en discusiones.
 
 ### Contribución en el Código
