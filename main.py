@@ -551,7 +551,7 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/describe", "Analizar imagen"),
         telebot.types.BotCommand("/reverse", "Buscar personaje"),
         telebot.types.BotCommand("/add_anime", "Agregar anime a la base de datos"),
-        telebot.types.BotCommand("/del_anime", "Eliminar anime a la base de datos"),
+        telebot.types.BotCommand("/del_anime", "Eliminar anime de la base de datos"),
         telebot.types.BotCommand("/blacklist", "Gestión de la lista negra"),
         telebot.types.BotCommand("/list_admins", "Listado de Administradores"),
         telebot.types.BotCommand("/ban", "Banear a un Usuario"),
