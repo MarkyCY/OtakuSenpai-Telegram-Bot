@@ -90,11 +90,11 @@ def query_text(inline_query):
     else:
         if args[0] == "<ANIME>":
             results = []
-            for anime in animes.find({'title': {'$regex': f'.*{str(args[1])}.*', '$options': 'i'}}).limit(10):
+            for anime in animes.find({'title': {'$regex': f'.*{str(args[1])}.*', '$options': 'i'}}):
                 text=f"⛩️{anime['title']}"
                 img="https://i.postimg.cc/Z5sHk6wJ/photo-2023-11-24-08-52-37.jpg"
                 result = InlineQueryResultArticle(
-                    id=anime['title'],  # El primer argumento ahora es 'id', no 'titulo'
+                    id=str(anime['_id']),  # El primer argumento ahora es 'id', no 'titulo'
                     thumbnail_url=img,
                     title=f"Anime: {anime['title']}",
                     description=f"Nombre de Anime: {anime['title']}",
@@ -117,5 +117,4 @@ def query_text(inline_query):
                 )
                 results.append(result)
             # Responde a la consulta en línea con los resultados
-
     bot.answer_inline_query(inline_query.id, results)
